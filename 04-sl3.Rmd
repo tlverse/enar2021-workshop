@@ -1,0 +1,757 @@
+# Super (Machine) Learning {#sl3}
+
+Based on the [`sl3` `R` package](https://github.com/tlverse/sl3) by _Jeremy
+Coyle, Nima Hejazi, Ivana Malenica, and Oleg Sofrygin_.
+
+Updated: `r Sys.Date()`
+
+## Learning Objectives
+By the end of this chapter you will be able to:
+
+1. Select a loss function that is appropriate for the functional parameter to be
+   estimated.
+2. Assemble an ensemble of learners based on the properties that identify what
+   features they support.
+3. Customize learner hyperparameters to incorporate a diversity of different
+   settings.
+4. Select a subset of available covariates and pass only those variables to the
+   modeling algorithm.
+5. Fit an ensemble with nested cross-validation to obtain an estimate of the
+   performance of the ensemble itself.
+6. Obtain `sl3` variable importance metrics.
+7. Interpret the discrete and continuous Super Learner fits.
+8. Rationalize the need to remove bias from the Super Learner to make an optimal
+   bias–variance tradeoff for the parameter of interest.
+
+## Motivation
+
+- A common task in statistical data analysis is estimator selection (e.g., for 
+  prediction).
+- There is no universally optimal machine learning algorithm for density 
+  estimation or prediction.
+- For some data, one needs learners that can model a complex function.
+- For others, possibly as a result of noise or insufficient sample size, a 
+  simple, parametric model might fit best.
+- The Super Learner, an ensemble learner, solves this issue, by allowing a
+  combination of learners from the simplest (intercept-only) to most complex
+  (neural nets, random forests, SVM, etc).
+- It works by using cross-validation in a manner which guarantees that the
+  resulting fit will be as good as possible, given the learners provided. 
+
+## Introduction
+
+In [Chapter 1](#intro), we introduced the Roadmap for Targeted Learning as a
+general template to translate real-world data applications into formal
+statistical estimation problems. The first steps of this roadmap define the
+*statistical estimation problem*, which establish
+
+1. Data as a realization of a random variable, or equivalently, an outcome of a
+   particular experiment.
+2. A statistical model, representing the true knowledge about the
+   data-generating experiment.
+3. A translation of the scientific question, which is often causal, into a
+   target parameter.
+
+Note that if the target parameter is causal, step 3 also requires
+establishing identifiability of the target quantity from the observed data
+distribution, under possible non-testable assumptions that may not necessarily
+be reasonable. Still, the target quantity does have a valid statistical
+interpretation. See [causal target parameters](#causal) for more detail on
+causal models and identifiability.
+
+Now that we have defined the statistical estimation problem, we are ready to
+construct the TMLE; an asymptotically linear and efficient substitution
+estimator of this target quantity. The first step in this estimation procedure
+is an initial estimate of the data-generating distribution, or the relevant part
+of this distribution that is needed to evaluate the target parameter. For this
+initial estimation, we use the *Super Learner* [@vdl2007super]. 
+
+The Super Learner provides an important step in creating a robust estimator. It 
+is a loss-function-based tool that uses cross-validation to obtain the best
+prediction of our target parameter, based on a weighted average of a library of
+machine learning algorithms. 
+
+The library of machine learning algorithms consists of functions ("learners" in
+the `sl3` nomenclature) that we think might be consistent with the true 
+data-generating distribution (i.e. algorithms selected based on contextual 
+knowledge of the experiment that generated the data). Also, the library should  
+contain a large set of "default" algorithms that may range from a simple linear 
+regression model to multi-step algorithms involving screening covariates, 
+penalizations, optimizing tuning parameters, etc. 
+
+The ensembling of the collection of algorithms with weights ("metalearning" in 
+the `sl3` nomenclature) has been shown to be adaptive and robust, even in small 
+samples [@polley2010super]. The Super Learner is proven to be asymptotically as 
+accurate as the best possible prediction algorithm in the library 
+[@vdl2003unified; @van2006oracle].
+
+### Background
+
+**Defining the loss function**
+
+- A *loss function* ($L$) is defined as a function of the observed data and a
+  candidate parameter value $\psi$, which has unknown true value $\psi_0$,
+  $L(\psi)(O)$. 
+
+- We can estimate the loss by substituting the empirical
+  distribution $P_n$ for the true (but unknown) distribution of the observed data
+  $P_0$. 
+  
+- A valid loss function will have expectation (risk) that is minimized at
+  the true value of the parameter $\psi_0$. For example, the conditional mean
+  minimizes the risk of the squared error loss. Thus, it is a valid loss function
+  when estimating the conditional mean.
+  
+**What is cross-validation and how does it work?**
+
+- There are many different cross-validation schemes, designed to accommodate different 
+  study designs and data structures.
+- The figure below shows an example of 10-fold cross-validation.  
+  
+```{r cv_fig, fig.show="hold", echo = FALSE}
+knitr::include_graphics("img/misc/vs.pdf")
+```  
+
+- The *cross-validated empirical risk* of an algorithm is defined as the empirical 
+  mean over a validation sample of the loss of the algorithm fitted on the 
+  training sample, averaged across the splits of the data.
+  
+- Cross-validation is proven to be optimal for selection among estimators. This 
+  result was established through the oracle inequality for the cross-validation 
+  selector among a collection of candidate estimators [@vdl2003unified; 
+  @van2006oracle]. The only condition is that loss function is uniformly bounded, 
+  which is guaranteed in `sl3`.  
+  
+**Discrete vs. Continuous Super Learner**
+
+- The *discrete Super Learner*, or *cross-validation selector*, is the algorithm
+  in the library that minimizes the cross-validated empirical risk. 
+
+- The *continuous/ensemble Super Learner*, often referred to as *Super Learner* 
+  is a weighted average of the library of algorithms, where the weights are chosen 
+  to minimize the cross-validated empirical risk of the library. 
+  
+- Restricting the weights to be positive and sum to one (i.e., a convex combination) has been 
+  shown to improve upon the discrete Super Learner [@polley2010super; 
+  @vdl2007super]. This notion of weighted combinations was introduced in 
+  @wolpert1992stacked for neural networks and adapted for regressions in 
+  @breiman1996stacked.
+
+<!--
+The *oracle results* prove that, if the number of algorithms in the library are
+polynomial in sample size, then the cross-validation selector (i.e., discrete
+Super Learner) (1) is equivalent with the oracle selector asymptotically (based
+on sample of size of training samples), or (2) achieves the parametric rate (log
+$n/n$) for convergence with respect to the loss-based dissimilarity (risk)
+between a candidate estimate $\psi$ and the true parameter value $\psi_0$.
+-->
+
+#### Example: Super Learner for Prediction
+
+- We observe a learning data set $X_i=(Y_i,W_i)$, for $i=1, ..., n$.
+- Here, $Y_i$ is the outcome of interest, and $W_i$ is a p-dimensional 
+  set of covariates.
+- Our objective is to estimate the function $\psi_0(W) = E(Y|W)$.
+- This function can be expressed as the minimizer of the expected loss:
+  $\psi_0(W) = \text{argmin}_{\psi} E[L(X,\psi(W))]$.
+- Here, the loss function is represented as $L$ (e.g., squared error loss,
+  $L: (Y-\psi(W))^2)$).
+
+#### General Overview of the Algorithm
+
+**General step-by-step overview of the Super Learner algorithm:**
+
+- Break up the sample evenly into $V$-folds (say $V$=10).
+- For each of these 10 folds, remove that portion of the sample (kept out as
+  validation sample) and the remaining will be used to fit learners (training
+  sample).
+- Fit each learner on the training sample (note, some learners will have their
+  own internal cross-validation procedure or other methods to select tuning
+  parameters).
+- For each observation in the corresponding validation sample, predict the outcome
+  using each of the learners, so if there are $p$ learners, then there would be
+  $p$ predictions.
+- Take out another validation sample and repeat until each of the $V$-sets of data
+  are removed.
+- Compare the cross-validated fit of the learners across all observations based
+  on specified loss function (e.g., squared error, negative log-likelihood, etc.)
+  by calculating the corresponding average loss (risk).
+- Either:
+
+  + choose the learner with smallest risk and apply that learner to entire data
+    set (resulting SL fit),
+  + do a weighted average of the learners to minimize the cross-validated risk
+    (construct an ensemble of learners), by
+
+    + re-fitting the learners on the original data set, and
+    + use the weights above to get the SL fit.
+
+This entire procedure can be itself cross-validated to get a consistent 
+estimate of the future performance of the Super Learner, and we implement this 
+procedure later in this chapter. 
+
+```{r cv_fig2, echo = FALSE}
+knitr::include_graphics("img/misc/SLKaiserNew.pdf")
+``` 
+
+### Why use the Super Learner?
+
+- For prediction, one can use the cross-validated risk to empirically determine
+  the relative performance of SL and competing methods. 
+- When we have tested different algorithms on actual
+  data and looked at the performance (e.g., MSE of prediction), never does one
+  algorithm always win (see below).
+- Below shows the results of such a study, comparing the fits of several different learners, 
+  including the SL algorithms.
+
+```{r cv_fig3, echo = FALSE}
+knitr::include_graphics("img/misc/ericSL.pdf")
+```
+
+- Super Learner performs asymptotically as well as best possible weighted 
+  combination. 
+- By including all competitors in the library of candidate estimators (glm, neural nets, 
+  SVMs, random forest, etc.), the Super Learner will asymptotically outperform 
+  any of its competitors- even if the set of competitors is allowed to grow polynomial
+  in sample size. 
+- Motivates the name "Super Learner": it provides a system of combining many estimators
+  into an improved estimator. 
+  
+For more detail on Super Learner we refer the reader to @vdl2007super and
+@polley2010super. The optimality results for the cross-validation selector
+among a family of algorithms were established in @vdl2003unified and extended
+in @van2006oracle.
+  
+## `sl3` "Microwave Dinner" Implementation
+
+We begin by illustrating the core functionality of the Super Learner algorithm
+as implemented in `sl3`. For those who are interested in the internals 
+of `sl3`, see this [`sl3` introductory 
+tutorial](https://tlverse.org/sl3/articles/intro_sl3.html). 
+
+The `sl3` implementation consists of the following steps:
+
+0. Load the necessary libraries and data
+1. Define the machine learning task
+2. Make a Super Learner by creating library of base learners and a metalearner
+3. Train the Super Learner on the machine learning task
+4. Obtain predicted values
+
+### WASH Benefits Study Example {-}
+
+Using the WASH data, we are interested in predicting weight-for-height z-score
+`whz` using the available covariate data. Let's begin!
+
+### 0. Load the necessary libraries and data {-}
+
+First, we will load the relevant `R` packages, set a seed, and load the data.
+
+```{r setup, message=FALSE, warning=FALSE}
+library(here)
+library(data.table)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(origami)
+library(SuperLearner)
+library(sl3)
+
+set.seed(7194) 
+# my lucky seed! or is it 9174? or 4917? many lucky seeds, thanks lysdexia!
+
+# load data set and take a peek
+washb_data <- fread("https://raw.githubusercontent.com/tlverse/tlverse-data/master/wash-benefits/washb_data.csv",
+                    stringsAsFactors = TRUE)
+head(washb_data) %>%
+  kable(digits = 4) %>%
+  kableExtra:::kable_styling(fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "300px")
+```
+
+### 1. Define the machine learning task {-}
+
+To define the machine learning **"task"** (predict weight-for-height z-score `whz`
+using the available covariate data), we need to create an `sl3_Task` object. 
+
+The `sl3_Task` keeps track of the roles the variables play in the
+machine learning problem, the data, and any metadata (e.g., observational-level
+weights, id, offset). 
+
+Also, if we had missing outcomes, we would need to set 
+`drop_missing_outcome = TRUE` when we create the task. 
+
+```{r task}
+# specify the outcome and covariates
+outcome <- "whz"
+covars <- colnames(washb_data)[-which(names(washb_data) == outcome)]
+
+# create the sl3 task
+washb_task <- make_sl3_Task(
+  data = washb_data,
+  covariates = covars,
+  outcome = outcome
+)
+```
+*This warning is important.* The task just imputed missing covariates for us.
+Specifically, for each covariate column with missing values, `sl3` uses the
+median to impute missing continuous covariates, and the mode to impute binary 
+and categorical covariates. 
+
+Also, for each covariate column with missing values, `sl3` adds an additional 
+column indicating whether or not the value was imputed, which is particularly 
+handy when the missingness in the data might be informative.
+
+Also, notice that we did not specify the number of folds, or the loss function
+in the task. The default cross-validation scheme is $V$-fold, with the number of
+folds $V=10$.
+
+Let's visualize our `washb_task`.
+
+```{r task-examine}
+washb_task
+```
+
+### 2. Make a Super Learner {-}
+
+Now that we have defined our machine learning problem with the task, we are
+ready to **"make"** the Super Learner. This requires specification of
+
+* A library of base learning algorithms that we think might be consistent with
+  the true data-generating distribution.
+* A metalearner, to ensemble the base learners.
+
+We might also incorporate
+
+* Feature selection, to pass only a subset of the predictors to the algorithm.
+* Hyperparameter specification, to tune base learners.
+
+Learners have properties that indicate what features they support. We may use
+`sl3_list_properties()` to get a list of all properties supported by at least
+one learner.
+
+```{r list-properties}
+sl3_list_properties()
+```
+Since we have a continuous outcome, we may identify the learners that support
+this outcome type with `sl3_list_learners()`.
+
+```{r list-learners}
+sl3_list_learners("continuous")
+```
+
+Now that we have an idea of some learners, we can construct them using the
+`make_learner` function.
+
+```{r baselearners}
+# choose base learners
+lrnr_glm <- make_learner(Lrnr_glm)
+lrnr_mean <- make_learner(Lrnr_mean)
+```
+We can customize learner hyperparameters to incorporate a diversity of different
+settings. Documentation for the learners and their hyperparameters can be found
+in the [`sl3` Learners
+Reference](https://tlverse.org/sl3/reference/index.html#section-sl-learners).
+
+```{r extra-lrnr-awesome, message=FALSE, warning=FALSE}
+lrnr_ranger50 <- make_learner(Lrnr_ranger, num.trees = 50)
+lrnr_hal_simple <- make_learner(Lrnr_hal9001, max_degree = 2, n_folds = 2)
+lrnr_lasso <- make_learner(Lrnr_glmnet) # alpha default is 1
+lrnr_ridge <- make_learner(Lrnr_glmnet, alpha = 0)
+lrnr_elasticnet <- make_learner(Lrnr_glmnet, alpha = .5)
+```
+
+We can also include learners from the `SuperLearner` `R` package.
+
+```{r extra-lrnr-woah, message=FALSE, warning=FALSE}
+lrnr_bayesglm <- Lrnr_pkg_SuperLearner$new("SL.bayesglm")
+```
+
+Here is a fun trick to create customized learners over a grid of parameters.
+
+```{r extra-lrnr-svm, eval = FALSE}
+# I like to crock pot my super learners
+grid_params <- list(cost = c(0.01, 0.1, 1, 10, 100, 1000),
+                    gamma = c(0.001, 0.01, 0.1, 1),
+                    kernel = c("polynomial", "radial", "sigmoid"),
+                    degree = c(1, 2, 3))
+grid <- expand.grid(grid_params, KEEP.OUT.ATTRS = FALSE)
+params_default <- list(nthread = getOption("sl.cores.learners", 1))
+svm_learners <- apply(grid, MARGIN = 1, function(params_tune) {
+  do.call(Lrnr_svm$new, c(params_default, as.list(params_tune)))})
+```
+```{r extra-lrnr-xgboost}
+grid_params <- list(max_depth = c(2, 4, 6, 8),
+                    eta = c(0.001, 0.01, 0.1, 0.2, 0.3),
+                    nrounds = c(20, 50))
+grid <- expand.grid(grid_params, KEEP.OUT.ATTRS = FALSE)
+params_default <- list(nthread = getOption("sl.cores.learners", 1))
+xgb_learners <- apply(grid, MARGIN = 1, function(params_tune) {
+  do.call(Lrnr_xgboost$new, c(params_default, as.list(params_tune)))})
+```
+
+Did you see `Lrnr_caret` when we called `sl3_list_learners(c("continuous"))`? 
+All we need to specify is the algorithm to use, which is passed as `method` to 
+`caret::train()`. The default method for parameter selection criterion with 
+is set to "CV" instead of the `caret::train()` default `boot`. The summary 
+metric to used to select the optimal model is `RMSE` for continuous outcomes 
+and `Accuracy` for categorical and binomial outcomes.
+
+```{r carotene, eval = FALSE}
+# I have no idea how to tune a neural net (or BART machine..) 
+lrnr_caret_nnet <- make_learner(Lrnr_caret, algorithm = "nnet")
+lrnr_caret_bartMachine <- make_learner(Lrnr_caret, algorithm = "bartMachine", 
+                                       method = "boot", metric = "RMSE",
+                                       tuneLength = 10)
+```
+In order to assemble the library of learners, we need to **"stack"** them
+together.
+
+A `Stack` is a special learner and it has the same interface as all
+other learners. What makes a stack special is that it combines multiple learners
+by training them simultaneously, so that their predictions can be either
+combined or compared.
+
+```{r stack}
+stack <- make_learner(
+  Stack,
+  lrnr_glm, lrnr_mean, lrnr_ridge, lrnr_lasso, xgb_learners[[10]]
+)
+```
+
+We can optionally select a subset of available covariates and pass only
+those variables to the modeling algorithm.
+
+Let's consider screening covariates based on their `randomForest` variable 
+importance ranking (ordered by mean decrease in accuracy). 
+
+```{r screener}
+screen_rf <- make_learner(Lrnr_screener_randomForest, nVar = 5, ntree = 20)
+# which covariates are selected on the full data?
+screen_rf$train(washb_task)
+```
+
+To **"pipe"** only the selected covariates to the modeling algorithm, we need to
+make a `Pipeline`, which is a just set of learners to be fit sequentially, where
+the fit from one learner is used to define the task for the next learner.
+
+```{r screener-pipe}
+screen_rf_pipeline <- make_learner(Pipeline, screen_rf, stack)
+```
+Now our learners will be preceded by a screening step.
+
+We also consider the original `stack`, to compare how the feature selection
+methods perform in comparison to the methods without feature selection.
+
+Analogous to what we have seen before, we have to stack the pipeline and
+original `stack` together, so we may use them as base learners in our super
+learner.
+
+```{r screeners-stack, message=FALSE, warning=FALSE}
+fancy_stack <- make_learner(Stack, screen_rf_pipeline, stack)
+# we can visualize the stack
+dt_stack <- delayed_learner_train(fancy_stack, washb_task)
+plot(dt_stack, color = FALSE, height = "400px", width = "100%")
+```
+
+We will use the [default 
+metalearner](https://github.com/tlverse/sl3/blob/master/R/default_metalearner.R), 
+which uses [`Lrnr_solnp()`](https://github.com/tlverse/sl3/blob/master/R/Lrnr_solnp.R) 
+to provide fitting procedures for a pairing of [loss 
+function](https://github.com/tlverse/sl3/blob/master/R/loss_functions.R) and 
+[metalearner 
+function](https://github.com/tlverse/sl3/blob/master/R/metalearners.R). This
+default metalearner selects a loss and metalearner pairing based on the outcome 
+type. Note that any learner can be used as a metalearner.
+
+We have made a library/stack of base learners, so we are ready to make the super 
+learner. The Super Learner algorithm fits a metalearner on the validation-set 
+predictions.
+
+```{r make-sl, message=FALSE, warning=FALSE}
+sl <- make_learner(Lrnr_sl,
+  learners = fancy_stack
+)
+```
+We can also use `Lrnr_cv` to build a Super Learner, cross-validate a stack of 
+learners to compare performance of the learners in the stack, or cross-validate
+any single learner (see "Cross-validation" section of this [`sl3` 
+introductory tutorial](https://tlverse.org/sl3/articles/intro_sl3.html)).
+
+Furthermore, we can [Define New `sl3` 
+Learners](https://tlverse.org/sl3/articles/custom_lrnrs.html) which can be used 
+in all the places you could otherwise use any other `sl3` learners, including
+`Pipelines`, `Stacks`, and the Super Learner. 
+
+```{r make-sl-plot, message=FALSE, warning=FALSE}
+dt_sl <- delayed_learner_train(sl, washb_task)
+plot(dt_sl, color = FALSE, height = "400px", width = "100%")
+```
+
+### 3. Train the Super Learner on the machine learning task {-}
+
+The Super Learner algorithm fits a metalearner on the validation-set
+predictions in a cross-validated manner, thereby avoiding overfitting. 
+
+Now we are ready to **"train"** our Super Learner on our `sl3_task` object,
+`washb_task`.
+
+```{r sl}
+sl_fit <- sl$train(washb_task)
+```
+
+### 4. Obtain predicted values {-}
+
+Now that we have fit the Super Learner, we are ready to calculate the predicted
+outcome for each subject.
+
+```{r sl-predictions}
+# we did it! now we have super learner predictions
+sl_preds <- sl_fit$predict()
+head(sl_preds)
+```
+<!--
+Below we visualize the observed versus predicted values. 
+
+For fun, we will also
+include the cross-validated predictions from most popular learner on the block, 
+main terms linear regression. 
+
+
+```{r, plot-predvobs-woohoo}
+
+df_plot <- data.frame(Observed = washb_data$whz, 
+                      Predicted = sl_preds,
+                      count = c(1:nrow(washb_data)))
+                      
+df_plot_melted <- melt(df_plot, 
+                       id.vars = "count", 
+                       measure.vars = c("Observed", "Predicted"))
+
+ggplot(df_plot_melted, aes(value, count, color = variable)) + geom_point() 
+```
+-->
+We can also obtain a summary of the results.
+
+```{r, sl-summary}
+sl_fit$print()
+```
+
+## Cross-validated Super Learner
+
+We can cross-validate the Super Learner to see how well the Super Learner
+performs on unseen data, and obtain an estimate of the cross-validated risk of
+the Super Learner.
+
+This estimation procedure requires an "external" layer of cross-validation,
+also called nested cross-validation, which involves setting aside a separate
+holdout sample that we don’t use to fit the Super Learner. This
+external cross validation procedure may also incorporate 10 folds, which is the
+default in `sl3`. However, we will incorporate 2 outer/external folds of
+cross-validation for computational efficiency.
+
+We also need to specify a loss function to evaluate Super Learner.
+Documentation for the available loss functions can be found in the [`sl3` Loss
+Function Reference](https://tlverse.org/sl3/reference/loss_functions.html).
+
+```{r CVsl}
+washb_task_new <- make_sl3_Task(
+  data = washb_data,
+  covariates = covars,
+  outcome = outcome,
+  folds = make_folds(washb_data, fold_fun = folds_vfold, V = 2)
+)
+CVsl <- CV_lrnr_sl(sl_fit, washb_task_new, loss_squared_error)
+CVsl %>%
+  kable(digits = 4) %>%
+  kableExtra:::kable_styling(fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "300px")
+```
+<!-- Explain summary!!!! -->
+
+## Variable Importance Measures with `sl3`
+
+Variable importance can be interesting and informative. It can also be 
+contradictory and confusing. Nevertheless, we like it, and so do 
+collaborators, so we created a variable importance function in `sl3`! The `sl3` 
+`varimp` function returns a table with variables listed in decreasing order of 
+importance (i.e. most important on the first row). 
+
+The measure of importance in `sl3` is based on a risk difference between the 
+learner fit with a permuted covariate and the learner fit with the true 
+covariate, across all covariates. In this manner, the larger the risk
+difference, the more important the variable is in the prediction. 
+
+Let's explore the `sl3` variable importance measurements for the `washb` data.
+
+```{r varimp}
+washb_varimp <- varimp(sl_fit, loss_squared_error)
+washb_varimp %>%
+  kable(digits = 4) %>%
+  kableExtra:::kable_styling(fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "300px")
+```
+
+## Exercises
+
+### Predicting Myocardial Infarction with `sl3` {#sl3ex1}
+
+Follow the steps below to predict myocardial infarction (`mi`) using the
+available covariate data. We thank Prof. David Benkeser at Emory University for
+making the this Cardiovascular Health Study (CHS) data accessible.
+
+```{r ex-setup, warning=FALSE, message=FALSE}
+# load the data set
+db_data <-
+ url("https://raw.githubusercontent.com/benkeser/sllecture/master/chspred.csv")
+chspred <- read_csv(file = db_data, col_names = TRUE)
+# take a quick peek
+head(chspred) %>%
+  kable(digits = 4) %>%
+  kableExtra:::kable_styling(fixed_thead = T) %>%
+  scroll_box(width = "100%", height = "300px")
+```
+
+1. Create an `sl3` task, setting myocardial infarction `mi` as the outcome and
+   using all available covariate data.
+2. Make a library of seven relatively fast base learning algorithms (i.e., do
+   not consider BART or HAL). Customize hyperparameters for one of your
+   learners. Feel free to use learners from `sl3` or `SuperLearner`. You may
+   use the same base learning library that is presented above.
+3. Incorporate feature selection with the `SuperLearner` screener `screen.corP`.
+4. Fit the metalearning step with the default metalearner.
+5. With the metalearner and base learners, make the Super Learner and train it
+   on the task.
+6. Print your Super Learner fit by calling `print()` with `$`.
+7. Cross-validate your Super Learner fit to see how well it performs on unseen
+   data. Specify `loss_squared_error` as the loss function to evaluate the
+   Super Learner.
+
+### Predicting Recurrent Ischemic Stroke in an RCT with `sl3` {#sl3ex2}
+
+For this exercise, we will work with a random sample of 5,000 patients who
+participated in the International Stroke Trial (IST). This data is described in 
+[Chapter 3.2 of the `tlverse` 
+handbook](https://tlverse.org/tlverse-handbook/data.html#ist).
+
+1. Train a Super Learner to predict recurrent stroke `DRSISC` with the available 
+   covariate data (the 25 other variables). Of course, you can consider feature 
+   selection in the machine learning algorithms. In this data, the outcome is 
+   occasionally missing, so be sure to specify `drop_missing_outcome = TRUE` 
+   when defining the task.
+2. Use the SL-based predictions to calculate the area under the ROC curve (AUC).
+3. Calculate the cross-validated AUC with cross-validated SL-based predictions. 
+   If you would like to decrease the number of outer cross-validation folds, 
+   then specify the task as described below for 5 outer folds. 
+
+```{r ex-setup2, warning=FALSE, message=FALSE}
+ist_data <- data.table(read.csv("https://raw.githubusercontent.com/tlverse/tlverse-handbook/master/data/ist_sample.csv"))
+
+# number 3 help
+ist_task_CVsl <- make_sl3_Task(
+  data = ist_data,
+  outcome = "DRSISC",
+  covariates = colnames(ist_data)[-which(names(ist_data) == "DRSISC")],
+  drop_missing_outcome = TRUE,
+  folds = make_folds(
+    n = sum(!is.na(ist_data$DRSISC)), 
+    fold_fun = folds_vfold,
+    V = 5
+    )
+  )
+```
+
+## Concluding Remarks
+
+* The general ensemble learning approach of Super Learner can be applied to a
+diversity of estimation and prediction problems that can be defined by a loss
+function. 
+
+* We just discussed conditional mean estimation, outcome prediction and 
+variable importance. In future updates of the handbook, we will delve into 
+prediction of a conditional density, and the optimal individualized treatment 
+rule. 
+
+* If we plug in the estimator returned by Super Learner into the target
+  parameter mapping, then we would end up with an estimator that has the same
+  bias as what we plugged in, and would not be asymptotically linear. It also 
+  would not be a plug-in estimator or efficient. 
+  
+  + An asymptotically linear estimator is important to have, since 
+  they converge to the estimand at $\frac{1}{\sqrt{n}}$ rate, and thereby permit 
+  formal statistical inference (i.e. confidence intervals and $p$-values).
+  + Plug-in estimators of the estimand are desirable because they respect both 
+  the local and global constraints of the statistical model (e.g., bounds), and
+  have they have better finite-sample properties. 
+  + An efficient estimator is optimal in the sense that it has the lowest 
+  possible variance, and is thus the most precise. An estimator is efficient if 
+  and only if is asymptotically linear with influence curve equal to the 
+  canonical gradient. The canonical gradient is a mathematical object that is 
+  specific to the target estimand, and it provides information on the level of 
+  difficulty of the estimation problem. The canonical gradient is shown in the 
+  chapters that follow. Practitioner's do not need to know how to calculate a 
+  canonical gradient in order to understand efficiency and use Targeted Maximum 
+  Likelihood Estimation (TMLE). Metaphorically, you do not need to be Yoda in 
+  order to be a Jedi.
+  
+* TMLE is a general strategy that succeeds in constructing efficient and 
+  asymptotically linear plug-in estimators. 
+
+* Super Learner is fantastic for pure prediction, and for obtaining an initial 
+  estimate in the first step of TMLE, but we need the second step of TMLE to
+  have the desirable statistical properties mentioned above. 
+
+* In the chapters that follow, we focus on the targeted maximum likelihood
+  estimator and the targeted minimum loss-based estimator, both referred to as
+  TMLE.
+
+## Appendix
+
+### Exercise 1 Solution
+
+Here is a potential solution to the [`sl3` Exercise -- Predicting Myocardial
+Infarction with `sl3`](#sl3ex).
+
+```{r ex-key, eval=FALSE, message=FALSE, warning=FALSE}
+# make task
+chspred_task <- make_sl3_Task(
+  data = chspred,
+  covariates = head(colnames(chspred), -1),
+  outcome = "mi"
+)
+
+# make learners
+glm_learner <- Lrnr_glm$new()
+lasso_learner <- Lrnr_glmnet$new(alpha = 1)
+ridge_learner <- Lrnr_glmnet$new(alpha = 0)
+enet_learner <- Lrnr_glmnet$new(alpha = 0.5)
+curated_glm_learner <- Lrnr_glm_fast$new(formula = "mi ~ smoke + beta + waist")
+mean_learner <- Lrnr_mean$new() # That is one mean learner!
+glm_fast_learner <- Lrnr_glm_fast$new()
+ranger_learner <- Lrnr_ranger$new()
+svm_learner <- Lrnr_svm$new()
+xgb_learner <- Lrnr_xgboost$new()
+screen_cor <- make_learner(Lrnr_screener_corP)
+glm_pipeline <- make_learner(Pipeline, screen_cor, glm_learner)
+
+# stack learners together
+stack <- make_learner(
+  Stack,
+  glm_pipeline, glm_learner,
+  lasso_learner, ridge_learner, enet_learner,
+  curated_glm_learner, mean_learner, glm_fast_learner,
+  ranger_learner, svm_learner, xgb_learner
+)
+
+# choose metalearner
+metalearner <- make_learner(Lrnr_nnls)
+
+sl <- Lrnr_sl$new(
+  learners = stack,
+  metalearner = metalearner
+)
+sl_fit <- sl$train(chspred_task)
+sl_fit$print()
+
+CVsl <- CV_lrnr_sl(sl_fit, chspred_task, loss_squared_error)
+CVsl
+```
