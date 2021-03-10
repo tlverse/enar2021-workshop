@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Chapter 4 The TMLE Framework | Targeted Learning in the tlverse (ENAR Workshop)</title>
+<meta name="author" content="Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana Malenica, Rachael Phillips">
+<!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.2"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.5.1/jquery-3.5.1.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><script src="libs/bs3compat-0.2.4.9002/tabs.js"></script><script src="libs/bs3compat-0.2.4.9002/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script><link href="libs/vis-4.20.1/vis.css" rel="stylesheet">
+<script src="libs/vis-4.20.1/vis.min.js"></script><script src="libs/visNetwork-binding-2.0.9/visNetwork.js"></script><script src="libs/kePrint-0.0.1/kePrint.js"></script><link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/autocomplete.js/0/autocomplete.jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/mark.js@8.11.1/dist/mark.min.js"></script><!-- CSS -->
+</head>
+<body data-spy="scroll" data-target="#toc">
+
+<div class="container-fluid">
+<div class="row">
+  <header class="col-sm-12 col-lg-3 sidebar sidebar-book"><a class="sr-only sr-only-focusable" href="#content">Skip to main content</a>
+
+    <div class="d-flex align-items-start justify-content-between">
+      <h1>
+        <a href="index.html" title="Causal Inference Meets Machine Learning">Targeted Learning in the <code>tlverse</code> (ENAR Workshop)</a>:
+        <small class="text-muted">Causal Inference Meets Machine Learning</small>
+      </h1>
+      <button class="btn btn-outline-primary d-lg-none ml-2 mt-1" type="button" data-toggle="collapse" data-target="#main-nav" aria-expanded="true" aria-controls="main-nav"><i class="fas fa-bars"></i><span class="sr-only">Show table of contents</span></button>
+    </div>
+
+    <div id="main-nav" class="collapse-lg">
+      <form role="search">
+        <input id="search" class="form-control" type="search" placeholder="Search" aria-label="Search">
+</form>
+
+      <nav aria-label="Table of contents"><h2>Table of contents</h2>
+        <ul class="book-toc list-unstyled">
+<li><a class="" href="index.html">Preface</a></li>
+<li><a class="" href="motivation.html">Motivation</a></li>
+<li><a class="" href="tlverse.html"><span class="header-section-number">1</span> Welcome to the tlverse</a></li>
+<li><a class="" href="intro.html"><span class="header-section-number">2</span> The Roadmap for Targeted Learning</a></li>
+<li><a class="" href="sl3.html"><span class="header-section-number">3</span> Super (Machine) Learning</a></li>
+<li><a class="active" href="the-tmle-framework.html"><span class="header-section-number">4</span> The TMLE Framework</a></li>
+<li><a class="" href="optimal-individualized-treatment-regimes.html"><span class="header-section-number">5</span> Optimal Individualized Treatment Regimes</a></li>
+<li><a class="" href="r6.html"><span class="header-section-number">6</span> A Primer on the R6 Class System</a></li>
+<li><a class="" href="references.html">References</a></li>
+</ul>
+
+        <div class="book-extra">
+          <p><a id="book-repo" href="https://github.com/tlverse/enar2021-workshop">View book source <i class="fab fa-github"></i></a></p>
+        </div>
+      </nav>
+</div>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><div id="the-tmle-framework" class="section level1">
+<h1>
+<span class="header-section-number">4</span> The TMLE Framework<a class="anchor" aria-label="anchor" href="#the-tmle-framework"><i class="fas fa-link"></i></a>
+</h1>
+<p>Based on the <a href="https://github.com/tlverse/tmle3"><code>tmle3</code> <code>R</code> package</a>.</p>
+<p>Updated: 2021-03-10</p>
+<div id="introduction-2" class="section level2">
+<h2>
+<span class="header-section-number">4.1</span> Introduction<a class="anchor" aria-label="anchor" href="#introduction-2"><i class="fas fa-link"></i></a>
+</h2>
+<p>The first step in the estimation procedure is an initial estimate of the
+data-generating distribution, or the relevant part of this distribution that is
+needed to evaluate the target parameter. For this initial estimation, we use the
+super learner <span class="citation">(van der Laan, Polley, and Hubbard <a href="references.html#ref-vdl2007super" role="doc-biblioref">2007</a>)</span>, as described in the previous section.</p>
+<p>With the initial estimate of relevant parts of the data-generating distribution
+necessary to evaluate the target parameter, we are ready to construct the TMLE!</p>
+<div id="substitution-estimators" class="section level3">
+<h3>
+<span class="header-section-number">4.1.1</span> Substitution Estimators<a class="anchor" aria-label="anchor" href="#substitution-estimators"><i class="fas fa-link"></i></a>
+</h3>
+<ul>
+<li>Beyond a fit of the prediction function, one might also want to estimate more
+targeted parameters specific to certain scientific questions.</li>
+<li>The approach is to plug into the estimand of interest estimates of the
+relevant distributions.</li>
+<li>Sometimes, we can use simple empirical distributions, but averaging some
+function over the observations (e.g., giving weight <span class="math inline">\(1/n\)</span> for all
+observations).</li>
+<li>Other parts of the distribution, like conditional means or probabilities, the
+estimate will require some sort of smoothing due to the curse of
+dimensionality.</li>
+</ul>
+<p>We give one example using an example of the average treatment effect (see
+above):</p>
+<ul>
+<li>
+<span class="math inline">\(\Psi(P_0) = \Psi(Q_0) = \mathbb{E}_0 \big[\mathbb{E}_0[Y \mid A = 1, W] - \mathbb{E}_0[Y \mid A = 0, W]\big]\)</span>, where <span class="math inline">\(Q_0\)</span> represents both the
+distribution of <span class="math inline">\(Y \mid A,W\)</span> and distribution of <span class="math inline">\(W\)</span>.</li>
+<li>Let <span class="math inline">\(\bar{Q}_0(A,W) \equiv \mathbb{E}_0(Y \mid A,W)\)</span> and <span class="math inline">\(Q_{0,W}(w) = P_0 (W=w)\)</span>, then
+<span class="math display">\[
+\Psi(Q_0) = \sum_w \{ \bar{Q}_0(1,w)-\bar{Q}_0(0,w)\} Q_{0,W}(w)
+\]</span>
+</li>
+<li>The <strong>Substitution Estimator</strong> plugs in the empirical distribution (weight
+<span class="math inline">\(1/n\)</span> for each observation) for <span class="math inline">\(Q_{0,W}(W_i)\)</span>, and some estimate of the
+regression of <span class="math inline">\(Y\)</span> on <span class="math inline">\((A,W)\)</span> (say SL fit):
+<span class="math display">\[
+ \Psi(Q_n) = \frac{1}{n} \sum_{i=1}^n  \{ \bar{Q}_n(1,W_i)-\bar{Q}_n(0,W_i)\}
+ \]</span>
+</li>
+<li>Thus, it becomes the average of the differences in predictions from the fit
+keeping the observed <span class="math inline">\(W\)</span>, but first replacing <span class="math inline">\(A=1\)</span> and then the same but all
+<span class="math inline">\(A=0\)</span>.</li>
+</ul>
+</div>
+<div id="tmle" class="section level3">
+<h3>
+<span class="header-section-number">4.1.2</span> TMLE<a class="anchor" aria-label="anchor" href="#tmle"><i class="fas fa-link"></i></a>
+</h3>
+<ul>
+<li>Though using SL over an arbitrary parametric regression is an improvement,
+it’s not sufficient to have the properties of an estimator one needs for
+rigorous inference.</li>
+<li>Because the variance-bias trade-off in the SL is focused on the prediction
+model, it can, for instance, under-fit portions of the distributions that are
+critical for estimating the parameter of interest, <span class="math inline">\(\Psi(P_0)\)</span>.</li>
+<li>TMLE keeps the benefits of substitution estimators (it is one), but augments
+the original estimates to correct for this issue and also results in an
+asymptotically linear (and thus normally-distributed) estimator with
+consistent Wald-style confidence intervals.</li>
+<li>Produces a well-defined, unbiased, efficient substitution estimator of target
+parameters of a data-generating distribution.</li>
+<li>Updates an initial (super learner) estimate of the relevant part of the
+data-generating distribution possibly using an estimate of a nuisance
+parameter (like the model of intervention given covariates).</li>
+<li>Removes asymptotic residual bias of initial estimator for the target
+parameter, if it uses a consistent estimator of <span class="math inline">\(g_0\)</span>.</li>
+<li>If initial estimator was consistent for the target parameter, the additional
+fitting of the data in the targeting step may remove finite sample bias, and
+preserves consistency property of the initial estimator.</li>
+<li>If the initial estimator and the estimator of <span class="math inline">\(g_0\)</span> are both consistent, then
+it is also asymptotically efficient according to semi-parametric statistical
+model efficiency theory.</li>
+<li>Thus, every effort is made to achieve minimal bias and the asymptotic
+semi-parametric efficiency bound for the variance.</li>
+</ul>
+<embed src="img/misc/TMLEimage.pdf" width="80%" style="display: block; margin: auto;" type="application/pdf"></embed><ul>
+<li>There are different types of TMLE, sometimes for the same set of parameters,
+but below is an example of the algorithm for estimating the ATE.</li>
+<li>In this case, one can present the estimator as:</li>
+</ul>
+<p><span class="math display">\[
+ \Psi(Q^{\star}_n) = \frac{1}{n} \sum_{i=1}^n \{ \bar{Q}^{\star}_n(1,W_i) -
+ \bar{Q}^{\star}_n(0,W_i)\}
+ \]</span>
+where <span class="math inline">\(\bar{Q}^{\star}_n(A,W)\)</span> is the TMLE augmented estimate.
+<span class="math inline">\(f(\bar{Q}^{\star}_n(A,W)) = f(\bar{Q}_n(A,W)) + \epsilon_n \cdot h_n(A,W)\)</span>,
+where <span class="math inline">\(f(\cdot)\)</span> is the appropriate link function (e.g., logit), <span class="math inline">\(\epsilon_n\)</span>
+is an estimated coefficient and <span class="math inline">\(h_n(A,W)\)</span> is a “clever covariate”.</p>
+<ul>
+<li>In this case, <span class="math inline">\(h_n(A,W) = \frac{A}{g_n(W)}-\frac{1-A}{1-g_n(W)}\)</span>, with
+<span class="math inline">\(g_n(W) = \mathbb{P}(A=1 \mid W)\)</span> being the estimated (also by SL) propensity score,
+so the estimator depends both on initial SL fit of the outcome regression
+(<span class="math inline">\(\bar{Q}_0\)</span>) and an SL fit of the propensity score (<span class="math inline">\(g_n\)</span>).</li>
+<li>There are further robust augmentations that are used in <code>tlverse</code>, such as an
+added layer of cross-validation to avoid over-fitting bias (CV-TMLE), and so
+called methods that can more robustly estimated several parameters
+simultaneously (e.g., the points on a survival curve).</li>
+</ul>
+</div>
+<div id="inference" class="section level3">
+<h3>
+<span class="header-section-number">4.1.3</span> Inference<a class="anchor" aria-label="anchor" href="#inference"><i class="fas fa-link"></i></a>
+</h3>
+<ul>
+<li>The estimators we discuss are <strong>asymptotically linear</strong>, meaning that the
+difference in the estimate <span class="math inline">\(\Psi(P_n)\)</span> and the true parameter (<span class="math inline">\(\Psi(P_0)\)</span>)
+can be represented in first order by a i.i.d. sum:
+<span class="math display">\[\begin{equation}\label{eqn:IC}
+\Psi(P_n) - \Psi(P_0) = \frac{1}{n} \sum_{i=1}^n IC(O_i; \nu) + o_p(1/\sqrt{n})
+\end{equation}\]</span>
+</li>
+</ul>
+<p>where <span class="math inline">\(IC(O_i; \nu)\)</span> (the influence curve or function) is a function of the data
+and possibly other nuisance parameters <span class="math inline">\(\nu\)</span>. Importantly, such estimators have
+mean-zero Gaussian limiting distributions; thus, in the univariate case, one has
+that
+<span class="math display">\[\begin{equation}\label{eqn:limit_dist}
+  \sqrt{n}(\Psi(P_n) - \Psi(P_0)) \xrightarrow[]{D}N(0,\mathbb{V}IC(O_i;\nu)),
+\end{equation}\]</span>
+so that inference for the estimator of interest may be obtained in terms of the
+influence function. For this simple case, a 95% confidence interval may be
+derived as:
+<span class="math display">\[\begin{equation}\label{eqn:CI}
+  \Psi(P^{\star}_n) \pm z_{1 - \frac{\alpha}{2}} \sqrt{\frac{\hat{\sigma}^2}{n}},
+\end{equation}\]</span>
+where <span class="math inline">\(SE=\sqrt{\frac{\hat{\sigma}^2}{n}}\)</span> and <span class="math inline">\(\hat{\sigma}^2\)</span> is the sample
+variance of the estimated IC’s: <span class="math inline">\(IC(O; \hat{\nu})\)</span>. One can use the functional
+delta method to derive the influence curve if a parameter of interest may be
+written as a function of other asymptotically linear estimators.</p>
+<ul>
+<li>Thus, we can derive robust inference for parameters that are estimated by
+fitting complex, machine learning algorithms and these methods are
+computationally quick (do not rely on re-sampling based methods like the
+bootstrap).</li>
+</ul>
+</div>
+</div>
+<div id="learning-objectives-3" class="section level2">
+<h2>
+<span class="header-section-number">4.2</span> Learning Objectives<a class="anchor" aria-label="anchor" href="#learning-objectives-3"><i class="fas fa-link"></i></a>
+</h2>
+<ol style="list-style-type: decimal">
+<li>Use <code>tmle3</code> to estimate an Average Treatment Effect (ATE)</li>
+<li>Understand <code>tmle3</code> “Specs”</li>
+<li>Fit <code>tmle3</code> for a custom set of parameters</li>
+<li>Use the delta method to estimate transformations of parameters</li>
+</ol>
+</div>
+<div id="easy-bake-example-tmle3-for-ate" class="section level2">
+<h2>
+<span class="header-section-number">4.3</span> Easy-Bake Example: <code>tmle3</code> for ATE<a class="anchor" aria-label="anchor" href="#easy-bake-example-tmle3-for-ate"><i class="fas fa-link"></i></a>
+</h2>
+<p>We’ll illustrate the most basic use of TMLE using the WASH benefits example data
+introduced earlier and estimating an Average Treatment Effect (ATE).</p>
+<p>As a reminder, the ATE is identified with the following statistical parameter
+(under assumptions): <span class="math inline">\(ATE = \mathbb{E}_0(Y(1)-Y(0)) = \mathbb{E}_0\left(\mathbb{E}_0[Y \mid A=1,W]-\mathbb{E}_0[Y \mid A=0,W] \right)\)</span></p>
+<p>This Easy-Bake implementation consists of the following steps:</p>
+<ol start="0" style="list-style-type: decimal">
+<li>Load the necessary libraries and data</li>
+<li>Define the variable roles</li>
+<li>Create a “Spec” object</li>
+<li>Define the super learners</li>
+<li>Fit the TMLE</li>
+<li>Evaluate the TMLE estimates</li>
+</ol>
+<div id="load-the-data" class="section level3 unnumbered">
+<h3>0. Load the Data<a class="anchor" aria-label="anchor" href="#load-the-data"><i class="fas fa-link"></i></a>
+</h3>
+<p>We’ll use the same WASH Benefits data as the earlier chapters:</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com">data.table</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tlverse.org/tmle3">tmle3</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tlverse.org/sl3">sl3</a></span><span class="op">)</span>
+<span class="va">washb_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/fread.html">fread</a></span><span class="op">(</span><span class="st">"https://raw.githubusercontent.com/tlverse/tlverse-data/master/wash-benefits/washb_data.csv"</span>, stringsAsFactors <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+</div>
+<div id="define-the-variable-roles" class="section level3 unnumbered">
+<h3>1. Define the variable roles<a class="anchor" aria-label="anchor" href="#define-the-variable-roles"><i class="fas fa-link"></i></a>
+</h3>
+<p>We’ll use the common <span class="math inline">\(W\)</span> (covariates), <span class="math inline">\(A\)</span> (treatment/intervention), <span class="math inline">\(Y\)</span>
+(outcome) data structure. <code>tmle3</code> needs to know what variables in the dataset
+correspond to each of these roles. We use a list of character vectors to tell
+it. We call this a <strong>“Node List”</strong> as it corresponds to the nodes in a Directed
+Acyclic Graph (DAG), a way of displaying causal relationships between variables.</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">node_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
+  W <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
+    <span class="st">"month"</span>, <span class="st">"aged"</span>, <span class="st">"sex"</span>, <span class="st">"momage"</span>, <span class="st">"momedu"</span>,
+    <span class="st">"momheight"</span>, <span class="st">"hfiacat"</span>, <span class="st">"Nlt18"</span>, <span class="st">"Ncomp"</span>, <span class="st">"watmin"</span>,
+    <span class="st">"elec"</span>, <span class="st">"floor"</span>, <span class="st">"walls"</span>, <span class="st">"roof"</span>, <span class="st">"asset_wardrobe"</span>,
+    <span class="st">"asset_table"</span>, <span class="st">"asset_chair"</span>, <span class="st">"asset_khat"</span>,
+    <span class="st">"asset_chouki"</span>, <span class="st">"asset_tv"</span>, <span class="st">"asset_refrig"</span>,
+    <span class="st">"asset_bike"</span>, <span class="st">"asset_moto"</span>, <span class="st">"asset_sewmach"</span>,
+    <span class="st">"asset_mobile"</span>
+  <span class="op">)</span>,
+  A <span class="op">=</span> <span class="st">"tr"</span>,
+  Y <span class="op">=</span> <span class="st">"whz"</span>
+<span class="op">)</span></code></pre></div>
+<div id="handling-missingness" class="section level4 unnumbered">
+<h4>Handling Missingness<a class="anchor" aria-label="anchor" href="#handling-missingness"><i class="fas fa-link"></i></a>
+</h4>
+<p>Currently, missingness in <code>tlverse</code> is handled in a fairly simple way:</p>
+<ul>
+<li>Missing covariates are median (for continuous) or mode (for discrete)
+imputed, and additional covariates indicating imputation are generated</li>
+<li>Observations missing treatment variables are excluded.</li>
+<li>We implement an IPCW-TMLE to more efficiently handle missingness in the
+outcome variables.</li>
+</ul>
+<p>These steps are implemented in the <code>process_missing</code> function in <code>tmle3</code>:</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">processed</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/process_missing.html">process_missing</a></span><span class="op">(</span><span class="va">washb_data</span>, <span class="va">node_list</span><span class="op">)</span>
+<span class="va">washb_data</span> <span class="op">&lt;-</span> <span class="va">processed</span><span class="op">$</span><span class="va">data</span>
+<span class="va">node_list</span> <span class="op">&lt;-</span> <span class="va">processed</span><span class="op">$</span><span class="va">node_list</span></code></pre></div>
+</div>
+</div>
+<div id="create-a-spec-object" class="section level3 unnumbered">
+<h3>2. Create a “Spec” Object<a class="anchor" aria-label="anchor" href="#create-a-spec-object"><i class="fas fa-link"></i></a>
+</h3>
+<p><code>tmle3</code> is general, and allows most components of the TMLE procedure to be
+specified in a modular way. However, most end-users will not be interested in
+manually specifying all of these components. Therefore, <code>tmle3</code> implements a
+<code>tmle3_Spec</code> object that bundles a set of components into a <strong>specification</strong>
+that, with minimal additional detail, can be run by an end-user.</p>
+<p>We’ll start with using one of the specs, and then work our way down into the
+internals of <code>tmle3</code>.</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ate_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle_ATE.html">tmle_ATE</a></span><span class="op">(</span>
+  treatment_level <span class="op">=</span> <span class="st">"Nutrition + WSH"</span>,
+  control_level <span class="op">=</span> <span class="st">"Control"</span>
+<span class="op">)</span></code></pre></div>
+</div>
+<div id="define-the-relevant-super-learners" class="section level3 unnumbered">
+<h3>3. Define the Relevant Super Learners<a class="anchor" aria-label="anchor" href="#define-the-relevant-super-learners"><i class="fas fa-link"></i></a>
+</h3>
+<p>Currently, the only other thing a user must define are the <code>sl3</code> learners used
+to estimate the relevant factors of the likelihood: Q and g.</p>
+<p>This takes the form of a list of <code>sl3</code> learners, one for each likelihood factor
+to be estimated with <code>sl3</code>:</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># choose base learners</span>
+<span class="va">lrnr_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tlverse.org/sl3/reference/Lrnr_base.html">make_learner</a></span><span class="op">(</span><span class="va">Lrnr_mean</span><span class="op">)</span>
+<span class="va">lrnr_xgboost</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tlverse.org/sl3/reference/Lrnr_base.html">make_learner</a></span><span class="op">(</span><span class="va">Lrnr_xgboost</span><span class="op">)</span>
+
+<span class="co"># define metalearners appropriate to data types</span>
+<span class="va">ls_metalearner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tlverse.org/sl3/reference/Lrnr_base.html">make_learner</a></span><span class="op">(</span><span class="va">Lrnr_nnls</span><span class="op">)</span>
+<span class="va">mn_metalearner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tlverse.org/sl3/reference/Lrnr_base.html">make_learner</a></span><span class="op">(</span>
+  <span class="va">Lrnr_solnp</span>, <span class="va">metalearner_linear_multinomial</span>,
+  <span class="va">loss_loglik_multinomial</span>
+<span class="op">)</span>
+<span class="va">sl_Y</span> <span class="op">&lt;-</span> <span class="va"><a href="https://tlverse.org/sl3/reference/Lrnr_sl.html">Lrnr_sl</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>
+  learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="va">lrnr_mean</span>, <span class="va">lrnr_xgboost</span><span class="op">)</span>,
+  metalearner <span class="op">=</span> <span class="va">ls_metalearner</span>
+<span class="op">)</span>
+<span class="va">sl_A</span> <span class="op">&lt;-</span> <span class="va"><a href="https://tlverse.org/sl3/reference/Lrnr_sl.html">Lrnr_sl</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>
+  learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="va">lrnr_mean</span>, <span class="va">lrnr_xgboost</span><span class="op">)</span>,
+  metalearner <span class="op">=</span> <span class="va">mn_metalearner</span>
+<span class="op">)</span>
+
+<span class="va">learner_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="va">sl_A</span>, Y <span class="op">=</span> <span class="va">sl_Y</span><span class="op">)</span></code></pre></div>
+<p>Here, we use a Super Learner as defined in the previous <code>sl3</code> section. In the
+future, we plan to include reasonable default learners.</p>
+</div>
+<div id="fit-the-tmle" class="section level3 unnumbered">
+<h3>4. Fit the TMLE<a class="anchor" aria-label="anchor" href="#fit-the-tmle"><i class="fas fa-link"></i></a>
+</h3>
+<p>We now have everything we need to fit the tmle using <code>tmle3</code>:</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">tmle_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle3.html">tmle3</a></span><span class="op">(</span><span class="va">ate_spec</span>, <span class="va">washb_data</span>, <span class="va">node_list</span>, <span class="va">learner_list</span><span class="op">)</span>
+<span class="co">#&gt; [22:46:03] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:04] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:04] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:05] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:06] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:08] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:09] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:10] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:11] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:14] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:15] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span></code></pre></div>
+</div>
+<div id="evaluate-the-estimates" class="section level3 unnumbered">
+<h3>5. Evaluate the Estimates<a class="anchor" aria-label="anchor" href="#evaluate-the-estimates"><i class="fas fa-link"></i></a>
+</h3>
+<p>We can see the summary results by printing the fit object. Alternatively, we
+can extra results from the summary by indexing into it:</p>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">tmle_fit</span><span class="op">)</span>
+<span class="co">#&gt; A tmle3_Fit that took 1 step(s)</span>
+<span class="co">#&gt;    type                                    param init_est    tmle_est       se</span>
+<span class="co">#&gt; 1:  ATE ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] 0.002628 -0.00073865 0.050391</span>
+<span class="co">#&gt;        lower    upper psi_transformed lower_transformed upper_transformed</span>
+<span class="co">#&gt; 1: -0.099503 0.098026     -0.00073865         -0.099503          0.098026</span>
+
+<span class="va">estimates</span> <span class="op">&lt;-</span> <span class="va">tmle_fit</span><span class="op">$</span><span class="va">summary</span><span class="op">$</span><span class="va">psi_transformed</span>
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">estimates</span><span class="op">)</span>
+<span class="co">#&gt; [1] -0.00073865</span></code></pre></div>
+</div>
+</div>
+<div id="tmle3-components" class="section level2">
+<h2>
+<span class="header-section-number">4.4</span> <code>tmle3</code> Components<a class="anchor" aria-label="anchor" href="#tmle3-components"><i class="fas fa-link"></i></a>
+</h2>
+<p>Now that we’ve successfully used a spec to obtain a TML estimate, let’s look
+under the hood at the components. The spec has a number of functions that
+generate the objects necessary to define and fit a TMLE.</p>
+<div id="tmle3_task" class="section level3">
+<h3>
+<span class="header-section-number">4.4.1</span> <code>tmle3_task</code><a class="anchor" aria-label="anchor" href="#tmle3_task"><i class="fas fa-link"></i></a>
+</h3>
+<p>First is, a <code>tmle3_Task</code>, analogous to an <code>sl3_Task</code>, containing the data we’re
+fitting the TMLE to, as well as an NPSEM generated from the <code>node_list</code> defined
+above, describing the variables and their relationships.</p>
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">tmle_task</span> <span class="op">&lt;-</span> <span class="va">ate_spec</span><span class="op">$</span><span class="fu">make_tmle_task</span><span class="op">(</span><span class="va">washb_data</span>, <span class="va">node_list</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">tmle_task</span><span class="op">$</span><span class="va">npsem</span>
+<span class="co">#&gt; $W</span>
+<span class="co">#&gt; tmle3_Node: W</span>
+<span class="co">#&gt;  Variables: month, aged, sex, momedu, hfiacat, Nlt18, Ncomp, watmin, elec, floor, walls, roof, asset_wardrobe, asset_table, asset_chair, asset_khat, asset_chouki, asset_tv, asset_refrig, asset_bike, asset_moto, asset_sewmach, asset_mobile, momage, momheight, delta_momage, delta_momheight</span>
+<span class="co">#&gt;  Parents: </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; $A</span>
+<span class="co">#&gt; tmle3_Node: A</span>
+<span class="co">#&gt;  Variables: tr</span>
+<span class="co">#&gt;  Parents: W</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; $Y</span>
+<span class="co">#&gt; tmle3_Node: Y</span>
+<span class="co">#&gt;  Variables: whz</span>
+<span class="co">#&gt;  Parents: A, W</span></code></pre></div>
+</div>
+<div id="initial-likelihood" class="section level3">
+<h3>
+<span class="header-section-number">4.4.2</span> Initial Likelihood<a class="anchor" aria-label="anchor" href="#initial-likelihood"><i class="fas fa-link"></i></a>
+</h3>
+<p>Next, is an object representing the likelihood, factorized according to the
+NPSEM described above:</p>
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">initial_likelihood</span> <span class="op">&lt;-</span> <span class="va">ate_spec</span><span class="op">$</span><span class="fu">make_initial_likelihood</span><span class="op">(</span>
+  <span class="va">tmle_task</span>,
+  <span class="va">learner_list</span>
+<span class="op">)</span>
+<span class="co">#&gt; [22:46:26] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:27] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:28] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:30] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:31] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:32] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:34] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:35] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:36] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:37] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:38] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">initial_likelihood</span><span class="op">)</span>
+<span class="co">#&gt; W: Lf_emp</span>
+<span class="co">#&gt; A: LF_fit</span>
+<span class="co">#&gt; Y: LF_fit</span></code></pre></div>
+<p>These components of the likelihood indicate how the factors were estimated: the
+marginal distribution of <span class="math inline">\(W\)</span> was estimated using NP-MLE, and the conditional
+distributions of <span class="math inline">\(A\)</span> and <span class="math inline">\(Y\)</span> were estimated using <code>sl3</code> fits (as defined with
+the <code>learner_list</code>) above.</p>
+<p>We can use this in tandem with the <code>tmle_task</code> object to obtain likelihood
+estimates for each observation:</p>
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">initial_likelihood</span><span class="op">$</span><span class="fu">get_likelihoods</span><span class="op">(</span><span class="va">tmle_task</span><span class="op">)</span>
+<span class="co">#&gt;                W       A        Y</span>
+<span class="co">#&gt;    1: 0.00021299 0.24777 -0.66024</span>
+<span class="co">#&gt;    2: 0.00021299 0.25473 -0.63282</span>
+<span class="co">#&gt;    3: 0.00021299 0.25927 -0.62043</span>
+<span class="co">#&gt;    4: 0.00021299 0.28067 -0.59987</span>
+<span class="co">#&gt;    5: 0.00021299 0.25367 -0.54247</span>
+<span class="co">#&gt;   ---                            </span>
+<span class="co">#&gt; 4691: 0.00021299 0.13503 -0.46139</span>
+<span class="co">#&gt; 4692: 0.00021299 0.12616 -0.48049</span>
+<span class="co">#&gt; 4693: 0.00021299 0.12641 -0.56625</span>
+<span class="co">#&gt; 4694: 0.00021299 0.17597 -0.81872</span>
+<span class="co">#&gt; 4695: 0.00021299 0.12997 -0.53951</span></code></pre></div>
+<!-- TODO: make helper to get learners out of fit objects -->
+</div>
+<div id="targeted-likelihood-updater" class="section level3">
+<h3>
+<span class="header-section-number">4.4.3</span> Targeted Likelihood (updater)<a class="anchor" aria-label="anchor" href="#targeted-likelihood-updater"><i class="fas fa-link"></i></a>
+</h3>
+<p>We also need to define a “Targeted Likelihood” object. This is a special type
+of likelihood that is able to be updated using an <code>tmle3_Update</code> object. This
+object defines the update strategy (e.g. submodel, loss function, CV-TMLE or
+not, etc).</p>
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">targeted_likelihood</span> <span class="op">&lt;-</span> <span class="va"><a href="http://tlverse.org/tmle3/reference/Targeted_Likelihood.html">Targeted_Likelihood</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">initial_likelihood</span><span class="op">)</span></code></pre></div>
+<p>When constructing the targeted likelihood, you can specify different update
+options. See the documentation for <code>tmle3_Update</code> for details of the different
+options. For example, you can disable CV-TMLE (the default in <code>tmle3</code>) as
+follows:</p>
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">targeted_likelihood_no_cv</span> <span class="op">&lt;-</span>
+  <span class="va"><a href="http://tlverse.org/tmle3/reference/Targeted_Likelihood.html">Targeted_Likelihood</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">initial_likelihood</span>,
+    updater <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>cvtmle <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+  <span class="op">)</span></code></pre></div>
+</div>
+<div id="parameter-mapping" class="section level3">
+<h3>
+<span class="header-section-number">4.4.4</span> Parameter Mapping<a class="anchor" aria-label="anchor" href="#parameter-mapping"><i class="fas fa-link"></i></a>
+</h3>
+<p>Finally, we need to define the parameters of interest. Here, the spec defines a
+single parameter, the ATE. In the next section, we’ll see how to add additional
+parameters.</p>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">tmle_params</span> <span class="op">&lt;-</span> <span class="va">ate_spec</span><span class="op">$</span><span class="fu">make_params</span><span class="op">(</span><span class="va">tmle_task</span>, <span class="va">targeted_likelihood</span><span class="op">)</span>
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">tmle_params</span><span class="op">)</span>
+<span class="co">#&gt; [[1]]</span>
+<span class="co">#&gt; Param_ATE: ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}]</span></code></pre></div>
+</div>
+<div id="putting-it-all-together" class="section level3">
+<h3>
+<span class="header-section-number">4.4.5</span> Putting it all together<a class="anchor" aria-label="anchor" href="#putting-it-all-together"><i class="fas fa-link"></i></a>
+</h3>
+<p>Having used the spec to manually generate all these components, we can now
+manually fit a <code>tmle3</code>:</p>
+<div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">tmle_fit_manual</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle3_Fit.html">fit_tmle3</a></span><span class="op">(</span>
+  <span class="va">tmle_task</span>, <span class="va">targeted_likelihood</span>, <span class="va">tmle_params</span>,
+  <span class="va">targeted_likelihood</span><span class="op">$</span><span class="va">updater</span>
+<span class="op">)</span>
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">tmle_fit_manual</span><span class="op">)</span>
+<span class="co">#&gt; A tmle3_Fit that took 1 step(s)</span>
+<span class="co">#&gt;    type                                    param  init_est   tmle_est       se</span>
+<span class="co">#&gt; 1:  ATE ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] 0.0024533 -0.0096405 0.050768</span>
+<span class="co">#&gt;       lower    upper psi_transformed lower_transformed upper_transformed</span>
+<span class="co">#&gt; 1: -0.10914 0.089864      -0.0096405          -0.10914          0.089864</span></code></pre></div>
+<p>The result is equivalent to fitting using the <code>tmle3</code> function as above.</p>
+</div>
+</div>
+<div id="fitting-tmle3-with-multiple-parameters" class="section level2">
+<h2>
+<span class="header-section-number">4.5</span> Fitting <code>tmle3</code> with multiple parameters<a class="anchor" aria-label="anchor" href="#fitting-tmle3-with-multiple-parameters"><i class="fas fa-link"></i></a>
+</h2>
+<p>Above, we fit a <code>tmle3</code> with just one parameter. <code>tmle3</code> also supports fitting
+multiple parameters simultaneously. To illustrate this, we’ll use the
+<code>tmle_TSM_all</code> spec:</p>
+<div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">tsm_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle_TSM_all.html">tmle_TSM_all</a></span><span class="op">(</span><span class="op">)</span>
+<span class="va">targeted_likelihood</span> <span class="op">&lt;-</span> <span class="va"><a href="http://tlverse.org/tmle3/reference/Targeted_Likelihood.html">Targeted_Likelihood</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">initial_likelihood</span><span class="op">)</span>
+<span class="va">all_tsm_params</span> <span class="op">&lt;-</span> <span class="va">tsm_spec</span><span class="op">$</span><span class="fu">make_params</span><span class="op">(</span><span class="va">tmle_task</span>, <span class="va">targeted_likelihood</span><span class="op">)</span>
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">all_tsm_params</span><span class="op">)</span>
+<span class="co">#&gt; [[1]]</span>
+<span class="co">#&gt; Param_TSM: E[Y_{A=Control}]</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[2]]</span>
+<span class="co">#&gt; Param_TSM: E[Y_{A=Handwashing}]</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[3]]</span>
+<span class="co">#&gt; Param_TSM: E[Y_{A=Nutrition}]</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[4]]</span>
+<span class="co">#&gt; Param_TSM: E[Y_{A=Nutrition + WSH}]</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[5]]</span>
+<span class="co">#&gt; Param_TSM: E[Y_{A=Sanitation}]</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[6]]</span>
+<span class="co">#&gt; Param_TSM: E[Y_{A=WSH}]</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[7]]</span>
+<span class="co">#&gt; Param_TSM: E[Y_{A=Water}]</span></code></pre></div>
+<p>This spec generates a Treatment Specific Mean (TSM) for each level of the
+exposure variable. Note that we must first generate a new targeted likelihood,
+as the old one was targeted to the ATE. However, we can recycle the initial
+likelihood we fit above, saving us a super learner step.</p>
+<div id="delta-method" class="section level3">
+<h3>
+<span class="header-section-number">4.5.1</span> Delta Method<a class="anchor" aria-label="anchor" href="#delta-method"><i class="fas fa-link"></i></a>
+</h3>
+<p>We can also define parameters based on Delta Method Transformations of other
+parameters. For instance, we can estimate a ATE using the delta method and two
+of the above TSM parameters:</p>
+<div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ate_param</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/define_param.html">define_param</a></span><span class="op">(</span>
+  <span class="va">Param_delta</span>, <span class="va">targeted_likelihood</span>,
+  <span class="va">delta_param_ATE</span>,
+  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="va">all_tsm_params</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">all_tsm_params</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>
+<span class="op">)</span>
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">ate_param</span><span class="op">)</span>
+<span class="co">#&gt; Param_delta: E[Y_{A=Nutrition + WSH}] - E[Y_{A=Control}]</span></code></pre></div>
+<p>This can similarly be used to estimate other derived parameters like Relative
+Risks, and Population Attributable Risks</p>
+</div>
+<div id="fit" class="section level3">
+<h3>
+<span class="header-section-number">4.5.2</span> Fit<a class="anchor" aria-label="anchor" href="#fit"><i class="fas fa-link"></i></a>
+</h3>
+<p>We can now fit a TMLE simultaneously for all TSM parameters, as well as the
+above defined ATE parameter</p>
+<div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">all_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">all_tsm_params</span>, <span class="va">ate_param</span><span class="op">)</span>
+
+<span class="va">tmle_fit_multiparam</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle3_Fit.html">fit_tmle3</a></span><span class="op">(</span>
+  <span class="va">tmle_task</span>, <span class="va">targeted_likelihood</span>, <span class="va">all_params</span>,
+  <span class="va">targeted_likelihood</span><span class="op">$</span><span class="va">updater</span>
+<span class="op">)</span>
+
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">tmle_fit_multiparam</span><span class="op">)</span>
+<span class="co">#&gt; A tmle3_Fit that took 1 step(s)</span>
+<span class="co">#&gt;    type                                       param   init_est  tmle_est</span>
+<span class="co">#&gt; 1:  TSM                            E[Y_{A=Control}] -0.5937962 -0.613477</span>
+<span class="co">#&gt; 2:  TSM                        E[Y_{A=Handwashing}] -0.6064124 -0.644888</span>
+<span class="co">#&gt; 3:  TSM                          E[Y_{A=Nutrition}] -0.6019064 -0.615316</span>
+<span class="co">#&gt; 4:  TSM                    E[Y_{A=Nutrition + WSH}] -0.5913428 -0.623089</span>
+<span class="co">#&gt; 5:  TSM                         E[Y_{A=Sanitation}] -0.5871441 -0.585550</span>
+<span class="co">#&gt; 6:  TSM                                E[Y_{A=WSH}] -0.5280048 -0.451937</span>
+<span class="co">#&gt; 7:  TSM                              E[Y_{A=Water}] -0.5754032 -0.531406</span>
+<span class="co">#&gt; 8:  ATE E[Y_{A=Nutrition + WSH}] - E[Y_{A=Control}]  0.0024533 -0.009612</span>
+<span class="co">#&gt;          se    lower     upper psi_transformed lower_transformed</span>
+<span class="co">#&gt; 1: 0.030006 -0.67229 -0.554667       -0.613477          -0.67229</span>
+<span class="co">#&gt; 2: 0.042335 -0.72786 -0.561913       -0.644888          -0.72786</span>
+<span class="co">#&gt; 3: 0.042543 -0.69870 -0.531934       -0.615316          -0.69870</span>
+<span class="co">#&gt; 4: 0.041038 -0.70352 -0.542656       -0.623089          -0.70352</span>
+<span class="co">#&gt; 5: 0.042212 -0.66828 -0.502817       -0.585550          -0.66828</span>
+<span class="co">#&gt; 6: 0.044962 -0.54006 -0.363814       -0.451937          -0.54006</span>
+<span class="co">#&gt; 7: 0.038728 -0.60731 -0.455499       -0.531406          -0.60731</span>
+<span class="co">#&gt; 8: 0.050760 -0.10910  0.089876       -0.009612          -0.10910</span>
+<span class="co">#&gt;    upper_transformed</span>
+<span class="co">#&gt; 1:         -0.554667</span>
+<span class="co">#&gt; 2:         -0.561913</span>
+<span class="co">#&gt; 3:         -0.531934</span>
+<span class="co">#&gt; 4:         -0.542656</span>
+<span class="co">#&gt; 5:         -0.502817</span>
+<span class="co">#&gt; 6:         -0.363814</span>
+<span class="co">#&gt; 7:         -0.455499</span>
+<span class="co">#&gt; 8:          0.089876</span></code></pre></div>
+</div>
+</div>
+<div id="stratified-effect-estimates" class="section level2">
+<h2>
+<span class="header-section-number">4.6</span> Stratified Effect Estimates<a class="anchor" aria-label="anchor" href="#stratified-effect-estimates"><i class="fas fa-link"></i></a>
+</h2>
+<p>TMLE can also be applied to estimate effects in in strata of a baseline covariate. The tmle_stratified spec makes it easy to extend an existing spec with stratification.</p>
+<p>For instance, we can estimate strata specific ATEs as follows:
+<span class="math inline">\(ATE = \mathbb{E}_0(Y(1)-Y(0) \mid V=v ) = \mathbb{E}_0\left(\mathbb{E}_0[Y \mid A=1,W]-\mathbb{E}_0[Y \mid A=0,W] \mid V=v \right)\)</span></p>
+<p>For example, we can stratify the above ATE spec to estimate the ATE in strata of sex:</p>
+<div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">stratified_ate_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle_stratified.html">tmle_stratified</a></span><span class="op">(</span><span class="va">ate_spec</span>, <span class="st">"sex"</span><span class="op">)</span>
+<span class="va">stratified_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle3.html">tmle3</a></span><span class="op">(</span><span class="va">stratified_ate_spec</span>, <span class="va">washb_data</span>, <span class="va">node_list</span>, <span class="va">learner_list</span><span class="op">)</span>
+<span class="co">#&gt; [22:46:58] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:46:59] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:00] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:02] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:03] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:03] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:05] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:06] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:07] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:08] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="co">#&gt; [22:47:09] WARNING: amalgamation/../src/learner.cc:1061: Starting in XGBoost 1.3.0, the default evaluation metric used with the objective 'multi:softprob' was changed from 'merror' to 'mlogloss'. Explicitly set eval_metric if you'd like to restore the old behavior.</span>
+<span class="fu"><a href="https://docs.ropensci.org/skimr/reference/print.html">print</a></span><span class="op">(</span><span class="va">stratified_fit</span><span class="op">)</span>
+<span class="co">#&gt; A tmle3_Fit that took 1 step(s)</span>
+<span class="co">#&gt;              type                                               param  init_est</span>
+<span class="co">#&gt; 1:            ATE            ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] 0.0023431</span>
+<span class="co">#&gt; 2: stratified ATE   ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] | V=male 0.0020390</span>
+<span class="co">#&gt; 3: stratified ATE ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] | V=female 0.0026461</span>
+<span class="co">#&gt;      tmle_est       se     lower   upper psi_transformed lower_transformed</span>
+<span class="co">#&gt; 1:  0.0050003 0.050411 -0.093804 0.10380       0.0050003         -0.093804</span>
+<span class="co">#&gt; 2:  0.0338530 0.075353 -0.113837 0.18154       0.0338530         -0.113837</span>
+<span class="co">#&gt; 3: -0.0237419 0.067014 -0.155087 0.10760      -0.0237419         -0.155087</span>
+<span class="co">#&gt;    upper_transformed</span>
+<span class="co">#&gt; 1:           0.10380</span>
+<span class="co">#&gt; 2:           0.18154</span>
+<span class="co">#&gt; 3:           0.10760</span></code></pre></div>
+<p>This TMLE is consistent for both the marginal ATE as well as the ATEs in strata of V. For continuous V, this could be extended using a working Marginal Structural Model (MSM), although that has not yet been implemented in <code>tmle3</code>.</p>
+</div>
+<div id="exercises" class="section level2">
+<h2>
+<span class="header-section-number">4.7</span> Exercises<a class="anchor" aria-label="anchor" href="#exercises"><i class="fas fa-link"></i></a>
+</h2>
+<div id="tmle3ex1" class="section level3">
+<h3>
+<span class="header-section-number">4.7.1</span> Estimation of the ATE with <code>tmle3</code><a class="anchor" aria-label="anchor" href="#tmle3ex1"><i class="fas fa-link"></i></a>
+</h3>
+<p>Follow the steps below to estimate an average treatment effect using data from
+the Collaborative Perinatal Project (CPP), available in the <code>sl3</code> package. To
+simplify this example, we define a binary intervention variable, <code>parity01</code> –
+an indicator of having one or more children before the current child and a
+binary outcome, <code>haz01</code> – an indicator of having an above average height for
+age.</p>
+<div class="sourceCode" id="cb58"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># load the data set</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">cpp</span><span class="op">)</span>
+<span class="va">cpp</span> <span class="op">&lt;-</span> <span class="va">cpp</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">cpp</span><span class="op">[</span>, <span class="st">"haz"</span><span class="op">]</span><span class="op">)</span>, <span class="op">]</span>
+<span class="va">cpp</span><span class="op">$</span><span class="va">parity01</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">cpp</span><span class="op">$</span><span class="va">parity</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span>
+<span class="va">cpp</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">cpp</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span>
+<span class="va">cpp</span><span class="op">$</span><span class="va">haz01</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="va">cpp</span><span class="op">$</span><span class="va">haz</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></code></pre></div>
+<ol style="list-style-type: decimal">
+<li>Define the variable roles <span class="math inline">\((W,A,Y)\)</span> by creating a list of these nodes.
+Include the following baseline covariates in <span class="math inline">\(W\)</span>: <code>apgar1</code>, <code>apgar5</code>,
+<code>gagebrth</code>, <code>mage</code>, <code>meducyrs</code>, <code>sexn</code>. Both <span class="math inline">\(A\)</span> and <span class="math inline">\(Y\)</span> are specified
+above.</li>
+<li>Define a <code>tmle3_Spec</code> object for the ATE, <code><a href="http://tlverse.org/tmle3/reference/tmle_ATE.html">tmle_ATE()</a></code>.</li>
+<li>Using the same base learning libraries defined above, specify <code>sl3</code> base
+learners for estimation of <span class="math inline">\(Q = E(Y|A,Y)\)</span> and <span class="math inline">\(g=P(A|W)\)</span>.</li>
+<li>Define the metalearner like below.</li>
+</ol>
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">metalearner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tlverse.org/sl3/reference/Lrnr_base.html">make_learner</a></span><span class="op">(</span><span class="va">Lrnr_solnp</span>,
+  loss_function <span class="op">=</span> <span class="va">loss_loglik_binomial</span>,
+  learner_function <span class="op">=</span> <span class="va">metalearner_logistic_binomial</span>
+<span class="op">)</span></code></pre></div>
+<ol start="5" style="list-style-type: decimal">
+<li>Define one super learner for estimating <span class="math inline">\(Q\)</span> and another for estimating <span class="math inline">\(g\)</span>.
+Use the metalearner above for both <span class="math inline">\(Q\)</span> and <span class="math inline">\(g\)</span> super learners.</li>
+<li>Create a list of the two super learners defined in Step 5 and call this
+object <code>learner_list</code>. The list names should be <code>A</code> (defining the super
+learner for estimating <span class="math inline">\(g\)</span>) and <code>Y</code> (defining the super learner for
+estimating <span class="math inline">\(Q\)</span>).</li>
+<li>Fit the tmle with the <code>tmle3</code> function by specifying (1) the <code>tmle3_Spec</code>,
+which we defined in Step 2; (2) the data; (3) the list of nodes, which we
+specified in Step 1; and (4) the list of super learners for estimating <span class="math inline">\(g\)</span>
+and <span class="math inline">\(Q\)</span>, which we defined in Step 6. <em>Note</em>: Like before, you will need to
+make a data copy to deal with <code>data.table</code> weirdness
+(<code>cpp2 &lt;- data.table::copy(cpp)</code>) and use <code>cpp2</code> as the data.</li>
+</ol>
+</div>
+<div id="tmle3ex2" class="section level3">
+<h3>
+<span class="header-section-number">4.7.2</span> Estimation of Strata-Specific ATEs with <code>tmle3</code><a class="anchor" aria-label="anchor" href="#tmle3ex2"><i class="fas fa-link"></i></a>
+</h3>
+<p>For this exercise, we will work with a random sample of 5,000 patients who
+participated in the International Stroke Trial (IST). This data is described in
+the <a href="https://tlverse.org/tlverse-handbook/data.html#ist">Chapter 3.2 of the <code>tlverse</code>
+handbook</a>. We included the
+data below and a summarized description that is relevant for this exercise.</p>
+<p>The outcome, <span class="math inline">\(Y\)</span>, indicates recurrent ischemic stroke within 14 days after
+randomization (<code>DRSISC</code>); the treatment of interest, <span class="math inline">\(A\)</span>, is the randomized
+aspirin vs. no aspirin treatment allocation (<code>RXASP</code> in <code>ist</code>); and the
+adjustment set, <span class="math inline">\(W\)</span>, consists simply of other variables measured at baseline. In
+this data, the outcome is occasionally missing, but there is no need to create a
+variable indicating this missingness (such as <span class="math inline">\(\Delta\)</span>) for analyses in the
+<code>tlverse</code>, since the missingness is automatically detected when <code>NA</code> are present
+in the outcome. Covariates with missing values (<code>RATRIAL</code>, <code>RASP3</code> and <code>RHEP24</code>)
+have already been imputed. Additional covariates were created
+(<code>MISSING_RATRIAL_RASP3</code> and <code>MISSING_RHEP24</code>), which indicate whether or not
+the covariate was imputed. The missingness was identical for <code>RATRIAL</code> and
+<code>RASP3</code>, which is why only one covariate indicating imputation for these two
+covariates was created.</p>
+<ol style="list-style-type: decimal">
+<li>Estimate the average effect of randomized asprin treatment (<code>RXASP</code> = 1) on
+recurrent ischemic stroke. Even though the missingness mechanism on <span class="math inline">\(Y\)</span>,
+<span class="math inline">\(\Delta\)</span>, does not need to be specified in the node list, it does still need
+to be accounted for in the TMLE. In other words, for this estimation problem,
+<span class="math inline">\(\Delta\)</span> is a relevant factor of the likelihood in addition to <span class="math inline">\(Q\)</span>, <span class="math inline">\(g\)</span>.
+Thus, when defining the list of <code>sl3</code> learners for each likelihood factor, be
+sure to include a list of learners for estimation of <span class="math inline">\(\Delta\)</span>, say <code>sl_Delta</code>,
+and specify something like
+<code>learner_list &lt;- list(A = sl_A, delta_Y = sl_Delta, Y = sl_Y)</code>.</li>
+<li>Recall that this RCT was conducted internationally. Suposse there is concern
+that the dose of asprin may have varied across geographical regions, and an
+average across all geographical regions may not be warranted. Calculate the
+strata specific ATEs according to geographical region (<code>REGION</code>).</li>
+</ol>
+</div>
+</div>
+<div id="summary" class="section level2">
+<h2>
+<span class="header-section-number">4.8</span> Summary<a class="anchor" aria-label="anchor" href="#summary"><i class="fas fa-link"></i></a>
+</h2>
+<p><code>tmle3</code> is a general purpose framework for generating TML estimates. The
+easiest way to use it is to use a predefined spec, allowing you to just fill in
+the blanks for the data, variable roles, and <code>sl3</code> learners. However, digging
+under the hood allows users to specify a wide range of TMLEs. In the next
+sections, we’ll see how this framework can be used to estimate advanced
+parameters such as optimal treatments and shift interventions.</p>
+
+</div>
+</div>
+  <div class="chapter-nav">
+<div class="prev"><a href="sl3.html"><span class="header-section-number">3</span> Super (Machine) Learning</a></div>
+<div class="next"><a href="optimal-individualized-treatment-regimes.html"><span class="header-section-number">5</span> Optimal Individualized Treatment Regimes</a></div>
+</div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
+    <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
+      <ul class="nav navbar-nav">
+<li><a class="nav-link" href="#the-tmle-framework"><span class="header-section-number">4</span> The TMLE Framework</a></li>
+<li>
+<a class="nav-link" href="#introduction-2"><span class="header-section-number">4.1</span> Introduction</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#substitution-estimators"><span class="header-section-number">4.1.1</span> Substitution Estimators</a></li>
+<li><a class="nav-link" href="#tmle"><span class="header-section-number">4.1.2</span> TMLE</a></li>
+<li><a class="nav-link" href="#inference"><span class="header-section-number">4.1.3</span> Inference</a></li>
+</ul>
+</li>
+<li><a class="nav-link" href="#learning-objectives-3"><span class="header-section-number">4.2</span> Learning Objectives</a></li>
+<li>
+<a class="nav-link" href="#easy-bake-example-tmle3-for-ate"><span class="header-section-number">4.3</span> Easy-Bake Example: tmle3 for ATE</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#load-the-data">0. Load the Data</a></li>
+<li><a class="nav-link" href="#define-the-variable-roles">1. Define the variable roles</a></li>
+<li><a class="nav-link" href="#create-a-spec-object">2. Create a “Spec” Object</a></li>
+<li><a class="nav-link" href="#define-the-relevant-super-learners">3. Define the Relevant Super Learners</a></li>
+<li><a class="nav-link" href="#fit-the-tmle">4. Fit the TMLE</a></li>
+<li><a class="nav-link" href="#evaluate-the-estimates">5. Evaluate the Estimates</a></li>
+</ul>
+</li>
+<li>
+<a class="nav-link" href="#tmle3-components"><span class="header-section-number">4.4</span> tmle3 Components</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#tmle3_task"><span class="header-section-number">4.4.1</span> tmle3_task</a></li>
+<li><a class="nav-link" href="#initial-likelihood"><span class="header-section-number">4.4.2</span> Initial Likelihood</a></li>
+<li><a class="nav-link" href="#targeted-likelihood-updater"><span class="header-section-number">4.4.3</span> Targeted Likelihood (updater)</a></li>
+<li><a class="nav-link" href="#parameter-mapping"><span class="header-section-number">4.4.4</span> Parameter Mapping</a></li>
+<li><a class="nav-link" href="#putting-it-all-together"><span class="header-section-number">4.4.5</span> Putting it all together</a></li>
+</ul>
+</li>
+<li>
+<a class="nav-link" href="#fitting-tmle3-with-multiple-parameters"><span class="header-section-number">4.5</span> Fitting tmle3 with multiple parameters</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#delta-method"><span class="header-section-number">4.5.1</span> Delta Method</a></li>
+<li><a class="nav-link" href="#fit"><span class="header-section-number">4.5.2</span> Fit</a></li>
+</ul>
+</li>
+<li><a class="nav-link" href="#stratified-effect-estimates"><span class="header-section-number">4.6</span> Stratified Effect Estimates</a></li>
+<li>
+<a class="nav-link" href="#exercises"><span class="header-section-number">4.7</span> Exercises</a><ul class="nav navbar-nav">
+<li><a class="nav-link" href="#tmle3ex1"><span class="header-section-number">4.7.1</span> Estimation of the ATE with tmle3</a></li>
+<li><a class="nav-link" href="#tmle3ex2"><span class="header-section-number">4.7.2</span> Estimation of Strata-Specific ATEs with tmle3</a></li>
+</ul>
+</li>
+<li><a class="nav-link" href="#summary"><span class="header-section-number">4.8</span> Summary</a></li>
+</ul>
+
+      <div class="book-extra">
+        <ul class="list-unstyled">
+<li><a id="book-source" href="https://github.com/tlverse/enar2021-workshop/blob/master/05-tmle3.Rmd">View source <i class="fab fa-github"></i></a></li>
+          <li><a id="book-edit" href="https://github.com/tlverse/enar2021-workshop/edit/master/05-tmle3.Rmd">Edit this page <i class="fab fa-github"></i></a></li>
+        </ul>
+</div>
+    </nav>
+</div>
+
+</div>
+</div> <!-- .container -->
+
+<footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>"<strong>Targeted Learning in the <code>tlverse</code> (ENAR Workshop)</strong>: Causal Inference Meets Machine Learning" was written by Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana Malenica, Rachael Phillips. It was last built on updated: March 10, 2021.</p>
+  </div>
+
+  <div class="col-12 col-md-6 mt-3">
+    <p>This book was built by the <a class="text-light" href="https://bookdown.org">bookdown</a> R package.</p>
+  </div>
+
+</div></div>
+</footer><!-- dynamically load mathjax for compatibility with self-contained --><script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+</html>
