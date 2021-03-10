@@ -1,24 +1,29 @@
+bookdown::bs4_book:
+  theme:
+    primary: "#637238"
+  repo: https://github.com/tlverse/enar2021-workshop
+
 bookdown::gitbook:
-  css: [css/style.css]
+  css: [css/style.css, css/toc.css, css/center.css]
+  dev: svg
   config:
     toc:
+      collapse: section
       before: |
-        <li><a href="./">CSP 2020 tlverse software workshop</a></li>
-      after: |
-        <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+        <li><strong><a href="./">Targeted Learning in R with the tlverse</a></strong></li>
     edit:
-      link: https://github.com/tlverse/csp2020-workshop/edit/master/%s
-    sharing:
-      github: yes
-      facebook: no
-    #includes:
-      #in_header: _includes/logo.html
-bookdown::html_chapters:
-  css: [css/style.css, css/toc.css]
+      link: https://github.com/tlverse/enar2021-handbook/edit/master/%s
+      text: "Edit"
+    sharing: no
+
 bookdown::pdf_book:
-  includes:
-    in_header: preamble.tex
-  latex_engine: xelatex
+  latex_engine: pdflatex
   citation_package: natbib
+  includes:
+    in_header: latex/preamble.tex
+    before_body: latex/before_body.tex
+    after_body: latex/after_body.tex
   keep_tex: yes
-bookdown::epub_book: default
+  highlight: tango
+  toc_unnumbered: false
+  toc_appendix: true

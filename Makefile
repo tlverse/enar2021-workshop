@@ -1,4 +1,3 @@
-.PHONY: all
 all: style book code
 
 book:
@@ -10,4 +9,6 @@ style:
 code:
 	rm R/*.R
 	R CMD BATCH purl.R
-	rm purl.Rout
+	rm purl.Rout .RData
+
+.PHONY: book code

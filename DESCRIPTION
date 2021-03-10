@@ -1,8 +1,10 @@
-Package: csp2020workshop
-Title: Targeted Learning Workshop at Conference on Statistical Practice 2020
-Version: 0.0.1
+Package: enar2021workshop
+Title: Targeted Learning Workshop at the ENAR 2021 Spring Meeting
+Version: 1.0.0
 Imports:
   bookdown,
+  bslib,
+  downlit,
   rmarkdown,
   ggplot2,
   tibble,
@@ -16,42 +18,33 @@ Imports:
   devtools,
   data.table,
   here,
-  webshot,
   mvtnorm,
   skimr,
+  delayed,
+  origami,
+  sl3,
+  tmle3,
+  tmle3mopttx
+Suggests:
   nnls,
   Rsolnp,
-  simcausal,
-  condensier,
   xgboost,
   ranger,
   glmnet,
   arm,
   gam,
   speedglm,
+  polspline,
   randomForest,
-  RFCDE,
   SuperLearner,
-  hal9001,
-  delayed,
-  origami,
-  sl3,
-  tmle3,
-  tmle3mopttx,
-  tmle3shift,
-  haldensify
+  hal9001
 Remotes:
+  github::rstudio/bslib,
   github::rstudio/bookdown,
-  github::osofr/simcausal,
-  github::osofr/condensier,
-  github::tpospisi/RFCDE/r,
-  github::tlverse/hal9001@master,
-  github::tlverse/delayed@master,
-  github::tlverse/origami@master,
-  github::tlverse/sl3@master,
+  github::tlverse/sl3@devel,
   github::tlverse/tmle3@master,
-  github::tlverse/tmle3mopttx@5ba5f65,
-  github::tlverse/tmle3shift@master,
-  github::nhejazi/haldensify@master
-URL: https://github.com/tlverse/csp2020-workshop
-BugReports: https://github.com/tlverse/csp2020-workshop/issues
+  github::tlverse/tmle3mopttx@5ba5f65
+URL:
+  https://github.com/tlverse/enar2021-workshop,
+  https://tlverse.org/enar2021-workshop
+BugReports: https://github.com/tlverse/enar2021-workshop/issues

@@ -1,5 +1,24 @@
-book_filename: "csp2020_workshop"
+new_session: yes
 delete_merged_file: true
+book_filename: "enar2021-workshop"
+clean: [packages.bib]
+before_chapter_script: "_common.R"
+
 language:
+  label:
+    fig: "FIGURE "
+    tab: "TABLE "
   ui:
     chapter_name: "Chapter "
+
+rmd_files: [
+  "index.Rmd",
+  "01-motivation.Rmd",
+  "02-intro-tlverse.Rmd",
+  "03-intro-roadmap.Rmd",
+  "04-sl3.Rmd",
+  "05-tmle3.Rmd",
+  "06-tmle3mopttx.Rmd",
+  "99-primer_R6.Rmd",
+  "references.Rmd"
+]
