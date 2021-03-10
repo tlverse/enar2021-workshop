@@ -23,7 +23,6 @@ jobs:
 
       - name: Install tinyTeX
         uses: r-lib/actions/setup-tinytex@v1
-        run: tlmgr --version
 
       - name: Query dependencies
         run: |
