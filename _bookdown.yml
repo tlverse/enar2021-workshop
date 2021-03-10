@@ -1,8 +1,9 @@
 new_session: yes
 delete_merged_file: true
+output_dir: "_book"
 book_filename: "enar2021-workshop"
-clean: [packages.bib]
 before_chapter_script: "_common.R"
+clean: [packages.bib]
 
 language:
   label:

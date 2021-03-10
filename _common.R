@@ -46,29 +46,3 @@ if (knitr:::is_latex_output()) {
 knitr::write_bib(c(
   .packages(), "bookdown", "knitr", "rmarkdown"
 ), "packages.bib")
-
-# create and set global ggplot theme
-# borrowed from https://github.com/tidymodels/TMwR/blob/master/_common.R
-theme_transparent <- function(...) {
-  # use black-white theme as base
-  ret <- ggplot2::theme_bw(...)
-
-  # modify with transparencies
-  trans_rect <- ggplot2::element_rect(fill = "transparent", colour = NA)
-  ret$panel.background  <- trans_rect
-  ret$plot.background   <- trans_rect
-  ret$legend.background <- trans_rect
-  ret$legend.key        <- trans_rect
-
-  # always have legend below
-  ret$legend.position <- "bottom"
-  return(ret)
-}
-
-library(ggplot2)
-theme_set(theme_transparent())
-theme_update(
-  text = element_text(size = 25),
-  axis.text.x = element_text(colour = "black", size = 30),
-  axis.text.y = element_text(colour = "black", size = 30)
-)
