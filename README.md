@@ -1,4 +1,4 @@
-# `tlverse` workshop at ENAR 2021 [![bookdown](https://github.com/tlverse/enar2021-workshop/actions/workflows/bookdown.yml/badge.svg)](https://github.com/tlverse/enar2021-workshop/actions/workflows/bookdown.yml) [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/tlverse/enar2021-workshop/master?urlpath=rstudio)
+# `tlverse` workshop at ENAR 2021 [![Booklet](https://github.com/tlverse/enar2021-workshop/actions/workflows/bookdown.yml/badge.svg)](https://github.com/tlverse/enar2021-workshop/actions/workflows/bookdown.yml) [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/tlverse/enar2021-workshop/master?urlpath=rstudio)
 
 Welcome to the GitHub repository accompanying a fully-day workshop on Targeted
 Learning with the `tlverse` software ecosystem, given (virtually) at the [ENAR

@@ -3,12 +3,12 @@ on:
     branches:
       - master
 
-name: renderbook
+name: Booklet
 
 jobs:
   bookdown:
     name: build-bookdown
-    runs-on: ubuntu-latest #macOS-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -25,7 +25,6 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt install -y curl libcurl4-doc libcurl4-openssl-dev
-          #brew install pkg-config cairo v8
 
       - name: Install R dependencies
         run: |
