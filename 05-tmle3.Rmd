@@ -530,10 +530,6 @@ covariates was created.
    average across all geographical regions may not be warranted. Calculate the 
    strata specific ATEs according to geographical region (`REGION`). 
 
-```{r tmle3-ex2}
-ist_data <- data.table(read.csv("https://raw.githubusercontent.com/tlverse/deming2019-workshop/master/data/ist_sample.csv"))
-```
-
 ## Summary
 
 `tmle3` is a general purpose framework for generating TML estimates. The
