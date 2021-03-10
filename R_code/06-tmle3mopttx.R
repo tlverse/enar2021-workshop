@@ -9,7 +9,7 @@ library(sl3)
 library(tmle3)
 library(tmle3mopttx)
 library(devtools)
-set.seed(111)
+set.seed(116)
 
 
 ## ----load sim_bin_data--------------------------------------------------------

@@ -8,5 +8,5 @@ chapters <- setdiff(str_subset(dir(), ".Rmd"),
 
 # create .R files
 lapply(chapters, function(f) {
-  purl(f, output = here("R", str_replace(f, ".Rmd", ".R")))
+  purl(f, output = here("R_code", str_replace(f, ".Rmd", ".R")))
 })

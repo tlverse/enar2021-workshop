@@ -164,7 +164,3 @@ metalearner <- make_learner(Lrnr_solnp,
   learner_function = metalearner_logistic_binomial
 )
 
-
-## ----tmle3-ex2----------------------------------------------------------------
-ist_data <- data.table(read.csv("https://raw.githubusercontent.com/tlverse/deming2019-workshop/master/data/ist_sample.csv"))
-

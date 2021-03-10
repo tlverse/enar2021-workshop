@@ -26,8 +26,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
-          saveRDS(pak::pkg_deps_tree("local::.", dependencies = TRUE), ".github/r-depends.rds")
+          install.packages("remotes")
+          saveRDS(remotes::local_package_deps(dependencies = TRUE), ".github/r-depends.rds")
         shell: Rscript {0}
 
       - name: Cache R packages
@@ -46,10 +46,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pak::local_install_dev_deps(upgrade = TRUE)
-          pak::pkg_install("rcmdcheck")
-          pak::pkg_install("rstudio/bookdown")
-          pak::pkg_install("rstudio/bslib")
+          remotes::install_github("rstudio/bookdown")
+          remotes::install_github("rstudio/bslib")
+          remotes::install_deps(dependencies = TRUE)
         shell: Rscript {0}
 
       - name: Render book

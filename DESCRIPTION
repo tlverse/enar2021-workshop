@@ -1,6 +1,7 @@
 Package: enar2021workshop
 Title: Targeted Learning Workshop at the ENAR 2021 Spring Meeting
 Version: 1.0.0
+Depends: R (>= 4.0.0)
 Imports:
   bookdown,
   bslib,
@@ -39,11 +40,11 @@ Suggests:
   SuperLearner,
   hal9001
 Remotes:
-  github::rstudio/bslib,
-  github::rstudio/bookdown,
-  github::tlverse/sl3@devel,
-  github::tlverse/tmle3@master,
-  github::tlverse/tmle3mopttx@5ba5f65
+  rstudio/bslib,
+  rstudio/bookdown,
+  tlverse/sl3@devel,
+  tlverse/tmle3@master,
+  tlverse/tmle3mopttx@5ba5f65
 URL:
   https://github.com/tlverse/enar2021-workshop,
   https://tlverse.org/enar2021-workshop
