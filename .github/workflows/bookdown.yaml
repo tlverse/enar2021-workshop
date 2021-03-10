@@ -8,9 +8,7 @@ name: renderbook
 jobs:
   bookdown:
     name: build-bookdown
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest #macOS-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -24,7 +22,12 @@ jobs:
       - name: Install tinyTeX
         uses: r-lib/actions/setup-tinytex@v1
 
-      - name: Install dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt install -y pkg-config curl libcurl4-openssl-dev libcairo-dev
+          #brew install pkg-config cairo v8
+
+      - name: Install R dependencies
         run: |
           install.packages("remotes")
           saveRDS(remotes::local_package_deps(dependencies = TRUE), ".github/r-depends.rds")
