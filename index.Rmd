@@ -25,13 +25,14 @@ description: "Open source, reproducible teaching materials accompanying a
   Meeting](https://www.enar.org/meetings/spring2021/) on 14 March 2021."
 ---
 
-# Preface {-}
+# Welcome! {-}
 
-This is open source, reproducible vignette is for a full-day workshop on the
-Targeted Learning framework for causal inference and machine learning, given at
-the [ENAR 2021 Spring Meeting](https://www.enar.org/meetings/spring2021/) on
-Sunday, 14 March 2021.  Beyond introducing Targeted Learning, the workshop
-focuses on applying the methodology in practice using the [`tlverse` software
+This open source, reproducible vignette is for a full-day workshop on the
+Targeted Learning framework for statistical and causal inference with machine
+learning, given at the [ENAR 2021 Spring
+Meeting](https://www.enar.org/meetings/spring2021/) on Sunday, 14 March 2021.
+Beyond introducing Targeted Learning, the workshop focuses on applying the
+methodology in practice using the [`tlverse` software
 ecosystem](https://github.com/tlverse).  These materials are based on a working
 draft of the book [*Targeted Learning in `R`: Causal Data Science with the
 `tlverse` Software Ecosystem*](https://tlverse.org/tlverse-handbook/), which
