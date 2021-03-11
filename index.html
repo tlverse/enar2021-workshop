@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Preface | [ENAR 2021 Workshop] Targeted Learning in the tlverse</title>
+<title>Welcome! | [ENAR 2021 Workshop] Targeted Learning in the tlverse</title>
 <meta name="author" content="Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana Malenica, Rachael Phillips">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.2"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/jquery-3.5.1/jquery-3.5.1.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
@@ -34,14 +34,15 @@
 
       <nav aria-label="Table of contents"><h2>Table of contents</h2>
         <ul class="book-toc list-unstyled">
-<li><a class="active" href="index.html">Preface</a></li>
+<li><a class="active" href="index.html">Welcome!</a></li>
 <li><a class="" href="motivation.html">Motivation</a></li>
 <li><a class="" href="tlverse.html"><span class="header-section-number">1</span> Welcome to the tlverse</a></li>
 <li><a class="" href="intro.html"><span class="header-section-number">2</span> The Roadmap for Targeted Learning</a></li>
 <li><a class="" href="sl3.html"><span class="header-section-number">3</span> Super (Machine) Learning</a></li>
 <li><a class="" href="the-tmle-framework.html"><span class="header-section-number">4</span> The TMLE Framework</a></li>
-<li><a class="" href="optimal-individualized-treatment-regimes.html"><span class="header-section-number">5</span> Optimal Individualized Treatment Regimes</a></li>
-<li><a class="" href="r6.html"><span class="header-section-number">6</span> A Primer on the R6 Class System</a></li>
+<li><a class="" href="optimal-individualized-treatment-regimes-optional.html"><span class="header-section-number">5</span> Optimal Individualized Treatment Regimes (optional)</a></li>
+<li><a class="" href="stochastic-treatment-regimes-optional.html"><span class="header-section-number">6</span> Stochastic Treatment Regimes (optional)</a></li>
+<li><a class="" href="r6.html"><span class="header-section-number">7</span> A Primer on the R6 Class System</a></li>
 <li><a class="" href="references.html">References</a></li>
 </ul>
 
@@ -50,14 +51,15 @@
         </div>
       </nav>
 </div>
-  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><!--bookdown:title:end--><!--bookdown:title:start--><div id="preface" class="section level1 unnumbered">
-<h1>Preface<a class="anchor" aria-label="anchor" href="#preface"><i class="fas fa-link"></i></a>
+  </header><main class="col-sm-12 col-md-9 col-lg-7" id="content"><!--bookdown:title:end--><!--bookdown:title:start--><div id="welcome" class="section level1 unnumbered">
+<h1>Welcome!<a class="anchor" aria-label="anchor" href="#welcome"><i class="fas fa-link"></i></a>
 </h1>
-<p>This is open source, reproducible vignette is for a full-day workshop on the
-Targeted Learning framework for causal inference and machine learning, given at
-the <a href="https://www.enar.org/meetings/spring2021/">ENAR 2021 Spring Meeting</a> on
-Sunday, 14 March 2021. Beyond introducing Targeted Learning, the workshop
-focuses on applying the methodology in practice using the <a href="https://github.com/tlverse"><code>tlverse</code> software
+<p>This open source, reproducible vignette is for a full-day workshop on the
+Targeted Learning framework for statistical and causal inference with machine
+learning, given at the <a href="https://www.enar.org/meetings/spring2021/">ENAR 2021 Spring
+Meeting</a> on Sunday, 14 March 2021.
+Beyond introducing Targeted Learning, the workshop focuses on applying the
+methodology in practice using the <a href="https://github.com/tlverse"><code>tlverse</code> software
 ecosystem</a>. These materials are based on a working
 draft of the book <a href="https://tlverse.org/tlverse-handbook/"><em>Targeted Learning in <code>R</code>: Causal Data Science with the
 <code>tlverse</code> Software Ecosystem</em></a>, which
@@ -104,22 +106,21 @@ necessary. Familiarity with the <code>R</code> programming language will be esse
 <h2>Outline<a class="anchor" aria-label="anchor" href="#outline"><i class="fas fa-link"></i></a>
 </h2>
 <ul>
-<li>08:00-08:10A: Introductions</li>
-<li>08:10-09:00A: The Roadmap of Targeted Learning and <a href="https://senseaboutscienceusa.org/super-learning-and-the-revolution-in-knowledge/">Why We Need A Statistical
+<li>08:00-08:50A: The Roadmap of Targeted Learning and <a href="https://senseaboutscienceusa.org/super-learning-and-the-revolution-in-knowledge/">Why We Need A Statistical
 Revolution</a>
 </li>
-<li>09:00-09:30A: Discussion</li>
-<li>09:30-10:00A: Morning Coffee Break</li>
+<li>08:50-09:20A: Discussion</li>
+<li>09:20-10:00A: Morning Coffee Break + Introductions</li>
 <li>10:00-10:30A: <a href="https://tlverse.org">Introduction to the <code>tlverse</code> Software
 Ecosystem</a> and the <a href="http://www.washbenefits.net/">WASH Benefits
-Data</a>
+data</a>
 </li>
-<li>10:30-11:30A: Ensemble machine learning with the <a href="https://github.com/tlverse/sl3"><code>sl3</code> <code>R</code>
+<li>10:30-11:30A: Super learning with the <a href="https://github.com/tlverse/sl3"><code>sl3</code> <code>R</code>
 package</a>
 </li>
 <li>11:30A-12:30P: Exercises with <code>sl3</code>
 </li>
-<li>12:30-01:30P: Lunch Break</li>
+<li>12:30-01:30P: Lunch Break with (optional) Q&amp;A</li>
 <li>01:30-02:30P: Targeted Learning for causal inference with the <a href="https://github.com/tlverse/tmle3"><code>tmle3</code> <code>R</code>
 package</a>
 </li>
@@ -127,9 +128,11 @@ package</a>
 </li>
 <li>03:30-03:45P: Afternoon Coffee Break</li>
 <li>03:45-05:00P: Optimal treatment regimes with the <a href="https://github.com/tlverse/tmle3mopttx"><code>tmle3mopttx</code> <code>R</code>
-package</a> and/or concluding discussion</li>
+package</a>, stochastic treatment
+regimes with the <a href="https://github.com/tlverse/tmle3shift"><code>tmle3shift</code> <code>R</code>
+package</a>, or concluding discussion</li>
 </ul>
-<p><strong>NOTE: All times are in ET.</strong></p>
+<p><strong>NOTE: All times are in Eastern Time.</strong></p>
 </div>
 <div id="about-the-instructors" class="section level2 unnumbered">
 <h2>About the instructors<a class="anchor" aria-label="anchor" href="#about-the-instructors"><i class="fas fa-link"></i></a>
@@ -253,7 +256,7 @@ following packages:</p>
 <tr class="even">
 <td align="left">delayed</td>
 <td align="left">0.3.0</td>
-<td align="left">CRAN (R 4.0.4)</td>
+<td align="left">Github (tlverse/delayed@47d90ae)</td>
 </tr>
 <tr class="odd">
 <td align="left">devtools</td>
@@ -318,7 +321,7 @@ following packages:</p>
 <tr class="odd">
 <td align="left">sl3</td>
 <td align="left">1.4.3</td>
-<td align="left">Github (tlverse/sl3@f7bd843)</td>
+<td align="left">Github (tlverse/sl3@9b11f74)</td>
 </tr>
 <tr class="even">
 <td align="left">stringr</td>
@@ -349,6 +352,11 @@ following packages:</p>
 <td align="left">tmle3mopttx</td>
 <td align="left">0.1.0</td>
 <td align="left">Github (tlverse/tmle3mopttx@5ba5f65)</td>
+</tr>
+<tr class="even">
+<td align="left">tmle3shift</td>
+<td align="left">0.1.9</td>
+<td align="left">Github (tlverse/tmle3shift@daa0f96)</td>
 </tr>
 </tbody>
 </table></div>
@@ -480,7 +488,7 @@ Data</a>.</p>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
-<li><a class="nav-link" href="#preface">Preface</a></li>
+<li><a class="nav-link" href="#welcome">Welcome!</a></li>
 <li><a class="nav-link" href="#important-links">Important links</a></li>
 <li><a class="nav-link" href="#about-this-workshop">About this workshop</a></li>
 <li><a class="nav-link" href="#outline">Outline</a></li>
@@ -515,7 +523,7 @@ Data</a>.</p>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>[ENAR 2021 Workshop] Targeted Learning in the <code>tlverse</code></strong>: Causal Inference Meets Machine Learning" was written by Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana Malenica, Rachael Phillips. It was last built on updated: March 10, 2021.</p>
+    <p>"<strong>[ENAR 2021 Workshop] Targeted Learning in the <code>tlverse</code></strong>: Causal Inference Meets Machine Learning" was written by Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana Malenica, Rachael Phillips. It was last built on updated: March 11, 2021.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

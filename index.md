@@ -4,7 +4,7 @@ title: "[ENAR 2021 Workshop] Targeted Learning in the `tlverse`"
 subtitle: "Causal Inference Meets Machine Learning"
 author: "Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana
   Malenica, Rachael Phillips"
-date: "updated: March 10, 2021"
+date: "updated: March 11, 2021"
 documentclass: book
 site: bookdown::bookdown_site
 bibliography: [book.bib, packages.bib]
@@ -25,13 +25,14 @@ description: "Open source, reproducible teaching materials accompanying a
   Meeting](https://www.enar.org/meetings/spring2021/) on 14 March 2021."
 ---
 
-# Preface {-}
+# Welcome! {-}
 
-This is open source, reproducible vignette is for a full-day workshop on the
-Targeted Learning framework for causal inference and machine learning, given at
-the [ENAR 2021 Spring Meeting](https://www.enar.org/meetings/spring2021/) on
-Sunday, 14 March 2021.  Beyond introducing Targeted Learning, the workshop
-focuses on applying the methodology in practice using the [`tlverse` software
+This open source, reproducible vignette is for a full-day workshop on the
+Targeted Learning framework for statistical and causal inference with machine
+learning, given at the [ENAR 2021 Spring
+Meeting](https://www.enar.org/meetings/spring2021/) on Sunday, 14 March 2021.
+Beyond introducing Targeted Learning, the workshop focuses on applying the
+methodology in practice using the [`tlverse` software
 ecosystem](https://github.com/tlverse).  These materials are based on a working
 draft of the book [*Targeted Learning in `R`: Causal Data Science with the
 `tlverse` Software Ecosystem*](https://tlverse.org/tlverse-handbook/), which
@@ -82,26 +83,27 @@ necessary.  Familiarity with the `R` programming language will be essential.
 
 ## Outline {-}
 
-* 08:00-08:10A: Introductions
-* 08:10-09:00A: The Roadmap of Targeted Learning and [Why We Need A Statistical
+* 08:00-08:50A: The Roadmap of Targeted Learning and [Why We Need A Statistical
   Revolution](https://senseaboutscienceusa.org/super-learning-and-the-revolution-in-knowledge/)
-* 09:00-09:30A: Discussion
-* 09:30-10:00A: Morning Coffee Break
+* 08:50-09:20A: Discussion
+* 09:20-10:00A: Morning Coffee Break + Introductions
 * 10:00-10:30A: [Introduction to the `tlverse` Software
   Ecosystem](https://tlverse.org) and the [WASH Benefits
-  Data](http://www.washbenefits.net/)
-* 10:30-11:30A: Ensemble machine learning with the [`sl3` `R`
+  data](http://www.washbenefits.net/)
+* 10:30-11:30A: Super learning with the [`sl3` `R`
   package](https://github.com/tlverse/sl3)
 * 11:30A-12:30P: Exercises with `sl3`
-* 12:30-01:30P: Lunch Break
+* 12:30-01:30P: Lunch Break with (optional) Q&A
 * 01:30-02:30P: Targeted Learning for causal inference with the [`tmle3` `R`
   package](https://github.com/tlverse/tmle3)
 * 02:30-03:30P: Exercises with `tmle3`
 * 03:30-03:45P: Afternoon Coffee Break
 * 03:45-05:00P: Optimal treatment regimes with the [`tmle3mopttx` `R`
-  package](https://github.com/tlverse/tmle3mopttx) and/or concluding discussion
+  package](https://github.com/tlverse/tmle3mopttx), stochastic treatment
+  regimes with the [`tmle3shift` `R`
+  package](https://github.com/tlverse/tmle3shift), or concluding discussion
 
-__NOTE: All times are in ET.__
+__NOTE: All times are in Eastern Time.__
 
 ## About the instructors {-}
 
@@ -198,7 +200,7 @@ following packages:
 |bookdown    |0.21.6     |Github (rstudio/bookdown\@ed31991)    |
 |bslib       |0.2.4.9002 |Github (rstudio/bslib\@aa5a842)       |
 |data.table  |1.14.0     |CRAN (R 4.0.4)                        |
-|delayed     |0.3.0      |CRAN (R 4.0.4)                        |
+|delayed     |0.3.0      |Github (tlverse/delayed\@47d90ae)     |
 |devtools    |2.3.2      |CRAN (R 4.0.4)                        |
 |downlit     |0.2.1      |CRAN (R 4.0.4)                        |
 |dplyr       |1.0.5      |CRAN (R 4.0.4)                        |
@@ -211,13 +213,14 @@ following packages:
 |readr       |1.4.0      |CRAN (R 4.0.4)                        |
 |rmarkdown   |2.7.3      |Github (rstudio/rmarkdown\@61db7a9)   |
 |skimr       |2.1.3      |CRAN (R 4.0.4)                        |
-|sl3         |1.4.3      |Github (tlverse/sl3\@f7bd843)         |
+|sl3         |1.4.3      |Github (tlverse/sl3\@9b11f74)         |
 |stringr     |1.4.0      |CRAN (R 4.0.4)                        |
 |tibble      |3.1.0      |CRAN (R 4.0.4)                        |
 |tidyr       |1.1.3      |CRAN (R 4.0.4)                        |
 |tidyverse   |1.3.0      |CRAN (R 4.0.4)                        |
 |tmle3       |0.1.7      |Github (tlverse/tmle3\@5d86bd4)       |
 |tmle3mopttx |0.1.0      |Github (tlverse/tmle3mopttx\@5ba5f65) |
+|tmle3shift  |0.1.9      |Github (tlverse/tmle3shift\@daa0f96)  |
 
 ## Setup instructions {#setup}
 
