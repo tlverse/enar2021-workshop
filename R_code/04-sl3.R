@@ -1,3 +1,15 @@
+## ----cv_fig, fig.show="hold", echo = FALSE------------------------------------
+knitr::include_graphics("img/misc/vs.pdf")
+
+
+## ----cv_fig2, fig.show="hold", echo = FALSE-----------------------------------
+knitr::include_graphics("img/misc/SLKaiserNew.pdf")
+
+
+## ----cv_fig3, fig.show="hold", echo = FALSE-----------------------------------
+knitr::include_graphics("img/misc/ericSL.pdf")
+
+
 ## ----setup--------------------------------------------------------------------
 library(data.table)
 library(dplyr)
@@ -46,7 +58,9 @@ length(washb_task$folds) # how many folds?
 head(washb_task$folds[[1]]$training_set) # row indexes for fold 1 training
 head(washb_task$folds[[1]]$validation_set) # row indexes for fold 1 validation
 
-any(washb_task$folds[[1]]$training_set %in% washb_task$folds[[1]]$validation_set)
+any(
+  washb_task$folds[[1]]$training_set %in% washb_task$folds[[1]]$validation_set
+)
 
 
 ## ----list-properties----------------------------------------------------------
@@ -95,7 +109,7 @@ lrn_bayesglm <- Lrnr_pkg_SuperLearner$new("SL.bayesglm")
 
 
 ## ----extra-lrnr-mindblown-svm, eval = FALSE-----------------------------------
-## # I like to crock pot my super learners
+## # I like to crock pot my SLs
 ## grid_params <- list(
 ##   cost = c(0.01, 0.1, 1, 10, 100, 1000),
 ##   gamma = c(0.001, 0.01, 0.1, 1),
@@ -142,8 +156,12 @@ stack
 
 ## ----alt-stack----------------------------------------------------------------
 # named vector of learners first
-learners <- c(lrn_glm, lrn_polspline, lrn_enet.5, lrn_ridge, lrn_lasso, xgb_50)
-names(learners) <- c("glm", "polspline", "enet.5", "ridge", "lasso", "xgboost50")
+learners <- c(
+  lrn_glm, lrn_polspline, lrn_enet.5, lrn_ridge, lrn_lasso, xgb_50
+)
+names(learners) <- c(
+  "glm", "polspline", "enet.5", "ridge", "lasso", "xgboost50"
+)
 # next make the stack
 stack <- make_learner(Stack, learners)
 # now the names are pretty
@@ -221,7 +239,7 @@ sl_fit <- sl$train(washb_task)
 
 
 ## ----sl-predictions-----------------------------------------------------------
-# we did it! now we have super learner predictions
+# we did it! now we have SL predictions
 sl_preds <- sl_fit$predict()
 head(sl_preds)
 
@@ -349,7 +367,7 @@ ist_task_CVsl <- make_sl3_Task(
 ##   ranger_learner, svm_learner, xgb_learner
 ## )
 ## 
-## # make and train super learner
+## # make and train SL
 ## sl <- Lrnr_sl$new(
 ##   learners = stack
 ## )
@@ -407,7 +425,7 @@ ist_task_CVsl <- make_sl3_Task(
 ## recursive = TRUE
 ## )
 ## 
-## # super learner
+## # SL
 ## sl <- Lrnr_sl$new(learners)
 ## sl_fit <- sl$train(ist_task)
 ## 
@@ -438,4 +456,8 @@ ist_task_CVsl <- make_sl3_Task(
 ##   importance_plot(
 ##     main = "Variable Importance for Predicting Recurrent Ischemic Stroke"
 ##   )
+
+
+## ----ex3-key, eval=FALSE------------------------------------------------------
+## # TODO
 

@@ -161,10 +161,9 @@ the recipe provided by @diaz2018stochastic, tailored to the `tmle3` framework:
 
 To start, let's load the packages we'll use and set a seed for simulation:
 
-```{r setup-shift, message=FALSE, warning=FALSE}
+```{r setup-shift}
 library(tidyverse)
 library(data.table)
-library(condensier)
 library(sl3)
 library(tmle3)
 library(tmle3shift)
@@ -180,7 +179,7 @@ TML estimator.
 1. The outcome regression, $\hat{Q}_n$, which is a simple regression of the
    form $\mathbb{E}[Y \mid A,W]$.
 
-```{r sl3_lrnrs-Qfit-shift, message=FALSE, warning=FALSE}
+```{r sl3_lrnrs-Qfit-shift}
 # learners used for conditional expectation regression
 mean_learner <- Lrnr_mean$new()
 fglm_learner <- Lrnr_glm_fast$new()
@@ -208,8 +207,8 @@ the highly adaptive lasso for conditional density estimation, based on an
 algorithm given by @diaz2011super and implemented in @hejazi2020haldensify, and
 semiparametric location-scale conditional density estimators implemented in the
 [`sl3` package](https://github.com/tlverse/sl3). A Super Learner may be
-constructed by pooling estimates from each of these modified conditional density
-regression techniques.
+constructed by pooling estimates from each of these modified conditional
+density estimation techniques.
 
 ```{r sl3_lrnrs-gfit-shift}
 # learners used for conditional densities (i.e., generalized propensity score)
@@ -237,7 +236,7 @@ sl_density_learner <- Lrnr_sl$new(
 Finally, we construct a `learner_list` object for use in constructing a TML
 estimator of our target parameter of interest:
 
-```{r learner-list-shift, message=FALSE, warning=FALSE}
+```{r learner-list-shift}
 Q_learner <- sl_regression_learner
 g_learner <- sl_density_learner
 learner_list <- list(Y = Q_learner, A = g_learner)
@@ -245,7 +244,7 @@ learner_list <- list(Y = Q_learner, A = g_learner)
 
 ### Simulate Data
 
-```{r sim_data, message=FALSE, warning=FALSE}
+```{r sim_data}
 # simulate simple data for tmle-shift sketch
 n_obs <- 1000 # number of observations
 tx_mult <- 2 # multiplier for the effect of W = 1 on the treatment
@@ -276,7 +275,7 @@ interest (a `tmle3_Spec` in the `tlverse` nomenclature) simply by calling
 `tmle3_Spec` object to communicate that we're interested in a shift of $0.5$ on
 the scale of the treatment $A$ -- that is, we specify $\delta = 0.5$.
 
-```{r spec_init-shift, message=FALSE, warning=FALSE}
+```{r spec_init-shift}
 # initialize a tmle specification
 tmle_spec <- tmle_shift(
   shift_val = 0.5,
@@ -306,7 +305,7 @@ sequel.
 
 ### Targeted Estimation of Stochastic Interventions Effects
 
-```{r fit_tmle-shift, message=FALSE, warning=FALSE, cache=FALSE}
+```{r fit_tmle-shift}
 tmle_fit <- tmle3(tmle_spec, data, node_list, learner_list)
 tmle_fit
 ```
@@ -359,7 +358,7 @@ when initializing the `tmle3_Spec` object to communicate that we're interested
 in assessing the mean counterfactual outcome over a grid of shifts `r seq(-1,
 1, by = 1)` on the scale of the treatment $A$.
 
-```{r vim_spec_init, message=FALSE, warning=FALSE}
+```{r vim_spec_init}
 # what's the grid of shifts we wish to consider?
 delta_grid <- seq(from = -1, to = 1, by = 1)
 
@@ -379,7 +378,7 @@ simply invoke the `tmle3` wrapper function  to fit the series of TML estimators
 (one for each parameter defined by the grid delta) in a single function call.
 For convenience, we choose the latter:
 
-```{r fit_tmle_wrapper_vimshift, message=FALSE, warning=FALSE, cache=FALSE}
+```{r fit_tmle_wrapper_vimshift}
 tmle_fit <- tmle3(tmle_spec, data, node_list, learner_list)
 tmle_fit
 ```
@@ -408,7 +407,7 @@ for $m_{\beta}(\delta)$ may be expressed $$\sqrt{n}(\beta_n - \beta_0) \to N(0,
 \Sigma),$$ where $\Sigma$ is the empirical covariance matrix of
 $\text{EIF}_{\beta}(O)$.
 
-```{r msm_fit, message=FALSE, warning=FALSE}
+```{r msm_fit}
 tmle_fit$summary[4:5, ]
 ```
 
@@ -436,7 +435,7 @@ parameters of the working marginal structural model, we may use the
 `tmle_vimshift_msm` Spec (instead of the `tmle_vimshift_delta` Spec that
 appears above):
 
-```{r vim_targeted_msm_fit, message=FALSE, warning=FALSE, cache=FALSE}
+```{r vim_targeted_msm_fit}
 # initialize a tmle specification
 tmle_msm_spec <- tmle_vimshift_msm(
   shift_grid = delta_grid,
@@ -454,7 +453,7 @@ To complete our walk through, let's turn to using stochastic interventions to
 investigate the data from the WASH Benefits trial. To start, let's load the
 data, convert all columns to be of class `numeric`, and take a quick look at it
 
-```{r load-washb-data-shift, message=FALSE, warning=FALSE, cache=FALSE}
+```{r load-washb-data-shift}
 washb_data <- fread("https://raw.githubusercontent.com/tlverse/tlverse-data/master/wash-benefits/washb_data_subset.csv", stringsAsFactors = TRUE)
 washb_data <- washb_data[!is.na(momage) & !is.na(momheight), ]
 head(washb_data, 3)
@@ -465,7 +464,7 @@ we'll consider the outcome to be the weight-for-height Z-score (as in previous
 sections), the intervention of interest to be the mother's age at time of
 child's birth, and take all other covariates to be potential confounders.
 
-```{r washb-data-npsem-shift, message=FALSE, warning=FALSE, cache=FALSE}
+```{r washb-data-npsem-shift}
 node_list <- list(
   W = names(washb_data)[!(names(washb_data) %in%
     c("whz", "momage"))],
@@ -484,7 +483,7 @@ defer or accelerate plans of having a child for two calendar years, possibly
 implemented through the deployment of an encouragement design.
 
 First, let's try a simple upward shift of just two years:
-```{r shift_spec_init_washb, message=FALSE, warning=FALSE}
+```{r shift_spec_init_washb}
 # initialize a tmle specification for just a single delta shift
 washb_shift_spec <- tmle_shift(
   shift_val = 2,
@@ -498,39 +497,34 @@ we'll estimate the effect of this shift $\delta = 2$ while stratifying on the
 mother's education level (`momedu`, a categorical variable with three levels).
 For this, we augment our initialized `tmle3_Spec` object like so
 
-```{r shift_spec_emm_washb, message=FALSE, warning=FALSE}
+```{r shift_spec_emm_washb}
 # initialize effect modification specification around previous specification
 washb_shift_strat_spec <-  tmle_stratified(washb_shift_spec, "momedu")
 ```
 
 Prior to running our analysis, we'll modify the `learner_list` object we had
-created such that the density estimation procedure we rely on will be only the
-random forest conditional density estimation procedure of @pospisil2018rfcde, as
-the nonparametric conditional density approach based on the highly adaptive
-lasso [@diaz2011super; @benkeser2016hal; @coyle2018hal9001;
-@hejazi2019haldensify] is currently unable to accommodate large datasets.
+created to include just one of the semiparametric location-scale conditional
+density estimators, as fitting of these estimators is much faster than the more
+computationally intensive approach implemented in the
+[`haldensify` package](ihttps://CRAN.R-project.org/package=haldensify)
+[@hejazi2020haldensify].
 
-```{r sl3_lrnrs-gfit-shift-washb, message=FALSE, warning=FALSE}
-# learners used for conditional density regression (i.e., propensity score)
-lrn_rfcde <- Lrnr_rfcde$new(
-  n_trees = 1000, node_size = 5,
-  n_basis = 31, output_type = "observed"
-)
-
-# we need to turn on cross-validation for the RFCDE learner
-lrn_cv_rfcde <- Lrnr_cv$new(
-  learner = lrn_rfcde,
+```{r sl3_lrnrs-gfit-shift-washb}
+# learners used for conditional density regression (i.e., propensity score),
+# but we need to turn on cross-validation for this conditional density learner
+hose_learner_xgb_cv <- Lrnr_cv$new(
+  learner = hose_learner_xgb,
   full_fit = TRUE
 )
 
 # modify learner list, using existing SL for Q fit
-learner_list <- list(Y = sl_lrn, A = lrn_cv_rfcde)
+learner_list <- list(Y = Q_learner, A = hose_learner_xgb_cv)
 ```
 
 Now we're ready to construct a TML estimate of the shift parameter at
 $\delta = 2$, stratified across levels of our variable of interest:
 
-```{r fit_shift_emm_washb, message=FALSE, warning=FALSE}
+```{r fit_shift_emm_washb}
 # fit stratified TMLE
 washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, node_list,
                                learner_list)
@@ -544,7 +538,7 @@ by two years ($\delta = 2$), incrementing by a single year between the two. To
 do this, we simply initialize a `Spec` `tmle_vimshift_delta` similar to how we
 did in a previous example:
 
-```{r vim_spec_init_washb, message=FALSE, warning=FALSE}
+```{r vim_spec_init_washb}
 # initialize a tmle specification for the variable importance parameter
 washb_vim_spec <- tmle_vimshift_delta(
   shift_grid = seq(from = -2, to = 2, by = 1),
@@ -557,7 +551,7 @@ counterfactual mean of the weight-for-height Z-score under a small grid of
 shifts in the mother's age at child's birth. Just as before, we do this through
 a simple call to our `tmle3` wrapper function:
 
-```{r fit_tmle_wrapper_washb, message=FALSE, warning=FALSE}
+```{r fit_tmle_wrapper_washb}
 washb_tmle_fit <- tmle3(washb_vim_spec, washb_data, node_list, learner_list)
 washb_tmle_fit
 ```
