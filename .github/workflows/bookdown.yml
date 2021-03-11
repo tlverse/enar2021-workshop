@@ -52,6 +52,7 @@ jobs:
           remotes::install_github("rstudio/bslib")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_github("tlverse/sl3@devel")
+          remotes::install_github("tlverse/tmle3@master")
         shell: Rscript {0}
 
       - name: Render book
