@@ -447,7 +447,7 @@ This TMLE is consistent for both the marginal ATE as well as the ATEs in strata 
 
 ## Exercises
 
-### Estimation of the ATE with `tmle3` {#sl3ex2}
+### Estimation of the ATE with `tmle3` {#tmle3ex1}
 
 Follow the steps below to estimate an average treatment effect using data from
 the Collaborative Perinatal Project (CPP), available in the `sl3` package. To
@@ -494,7 +494,7 @@ metalearner <- make_learner(Lrnr_solnp,
    make a data copy to deal with `data.table` weirdness
    (`cpp2 <- data.table::copy(cpp)`) and use `cpp2` as the data.
 
-### Estimation of Strata-Specific ATEs with `tmle3` {#sl3ex2}
+### Estimation of Strata-Specific ATEs with `tmle3` {#tmle3ex2}
 
 For this exercise, we will work with a random sample of 5,000 patients who
 participated in the International Stroke Trial (IST). This data is described in 

@@ -1,6 +1,6 @@
 ---
 knit: "bookdown::render_book"
-title: "Targeted Learning in the `tlverse` (ENAR Workshop)"
+title: "[ENAR 2021 Workshop] Targeted Learning in the `tlverse`"
 subtitle: "Causal Inference Meets Machine Learning"
 author: "Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana
   Malenica, Rachael Phillips"
@@ -27,15 +27,6 @@ description: "Open source, reproducible teaching materials accompanying a
 
 # Preface {-}
 
-<img style="float: center; margin-right: 1%; margin-bottom: 0.01em"
-     src="img/logos/tlverse-logo.svg" width="30%" height="30%">
-<img style="float: center; margin-right: 1%; margin-bottom: 0.01em"
-     src="img/logos/Rlogo.svg" width="35%" height="35%">
-<img style="float: center; margin-right: 1%; margin-bottom: 0.01em"
-     src="img/logos/vdl-logo-transparent.svg" width="30%" height="30%">
-<p style="clear: both;">
-<br>
-
 This is open source, reproducible vignette is for a full-day workshop on the
 Targeted Learning framework for causal inference and machine learning, given at
 the [ENAR 2021 Spring Meeting](https://www.enar.org/meetings/spring2021/) on
@@ -46,6 +37,15 @@ draft of the book [*Targeted Learning in `R`: Causal Data Science with the
 `tlverse` Software Ecosystem*](https://tlverse.org/tlverse-handbook/), which
 includes in-depth discussion of these topics and much more, and may serve as a
 useful reference to accompany these workshop materials.
+
+<img style="float: center; margin-right: 1%; margin-bottom: 0.01em"
+     src="img/logos/tlverse-logo.svg" width="30%" height="30%">
+<img style="float: center; margin-right: 1%; margin-bottom: 0.01em"
+     src="img/logos/Rlogo.svg" width="35%" height="35%">
+<img style="float: center; margin-right: 1%; margin-bottom: 0.01em"
+     src="img/logos/vdl-logo-transparent.svg" width="30%" height="30%">
+<p style="clear: both;">
+<br>
 
 ## Important links {-}
 
@@ -59,7 +59,7 @@ useful reference to accompany these workshop materials.
 
 * __Code__: `R` script files for each section of the workshop are available via
   the GitHub repository for the workshop at
-  https://github.com/tlverse/enar2021-workshop/tree/master/R
+  https://github.com/tlverse/enar2021-workshop/tree/master/R_code
 
 ## About this workshop {-}
 

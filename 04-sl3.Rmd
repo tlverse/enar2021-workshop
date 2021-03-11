@@ -1221,13 +1221,3 @@ ist_varimp %>%
     main = "Variable Importance for Predicting Recurrent Ischemic Stroke"
   )
 ```
-
-<!--
-### Exercise 3 Solution {#sl3ex3-sol}
-
-Here's a potential solution to the (Exercise 3)[#sl3ex3].
-
-```{r ex3-key, eval=FALSE}
-# TODO
-```
--->
