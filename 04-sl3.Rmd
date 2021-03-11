@@ -331,17 +331,17 @@ To define the machine learning **"task"** (predict weight-for-height Z-score
 object.
 
 The `sl3_Task` keeps track of the roles the variables play in the machine
-learning problem, the data, and any metadata (e.g., observational-level weights,
-IDs, offset).
+learning problem, the data, and any metadata (e.g., observational-level
+weights, IDs, offset).
 
 Also, if we had missing outcomes, we would need to set `drop_missing_outcome =
 TRUE` when we create the task. In the next analysis, with the [IST stroke trial
 data](#ist), we do have a missing outcome. In the following chapter, we need to
-estimate this "missingness mechanism"; which is the conditional probably that 
-the outcome is observed, given the history (i.e., variables that were measured 
-before the missingness). Estimating the missingness mechanism requires learning 
-a prediction function that outputs the predicted probability that a unit 
-is missing, given their history. 
+estimate this "missingness mechanism"; which is the conditional probably that
+the outcome is observed, given the history (i.e., variables that were measured
+before the missingness). Estimating the missingness mechanism requires learning
+a prediction function that outputs the predicted probability that a unit
+is missing, given their history.
 
 ```{r task, warning=TRUE}
 # specify the outcome and covariates
@@ -365,7 +365,7 @@ column indicating whether or not the value was imputed, which is particularly
 handy when the missingness in the data might be informative.
 
 Also, notice that we did not specify the number of folds, or the loss function
-in the task. The default cross-validation scheme is V-fold, with $V=10$ number 
+in the task. The default cross-validation scheme is V-fold, with $V=10$ number
 of folds.
 
 Let's visualize our `washb_task`:
@@ -374,8 +374,8 @@ Let's visualize our `washb_task`:
 washb_task
 ```
 
-We can't see when we print the task, but the default cross-validation fold 
-structure ($V$-fold cross-validation with $V$=10 folds) was created when we 
+We can't see when we print the task, but the default cross-validation fold
+structure ($V$-fold cross-validation with $V$=10 folds) was created when we
 defined the task.
 
 ```{r task-folds-examine}
@@ -384,21 +384,23 @@ length(washb_task$folds) # how many folds?
 head(washb_task$folds[[1]]$training_set) # row indexes for fold 1 training
 head(washb_task$folds[[1]]$validation_set) # row indexes for fold 1 validation
 
-any(washb_task$folds[[1]]$training_set %in% washb_task$folds[[1]]$validation_set)
+any(
+  washb_task$folds[[1]]$training_set %in% washb_task$folds[[1]]$validation_set
+)
 ```
 
-`R6` Tip: If you type `washb_task$` and then press the "tab"  button (you will 
-need to press "tab" twice if you're not in RStudio), you can view all of the 
-active and public fields and methods that can be accessed from the `washb_task` 
-object. 
+`R6` Tip: If you type `washb_task$` and then press the "tab"  button (you will
+need to press "tab" twice if you're not in RStudio), you can view all of the
+active and public fields and methods that can be accessed from the `washb_task`
+object.
 
 ### 2. Make a Super Learner {-}
 
-Now that we have defined our machine learning problem with the `sl3_Task`, we 
+Now that we have defined our machine learning problem with the `sl3_Task`, we
 are ready to **"make"** the Super Learner (SL). This requires specification of
 
-* A set of candidate machine learning algorithms, also commonly referred to as 
-  a "library" of "learners". The set should include a diversity of algorithms 
+* A set of candidate machine learning algorithms, also commonly referred to as
+  a "library" of "learners". The set should include a diversity of algorithms
   that are believed to be consistent with the true data-generating distribution.
 * A metalearner, to ensemble the base learners.
 
@@ -448,25 +450,25 @@ lrn_hal_faster <- Lrnr_hal9001$new(max_degree = 2, reduce_basis = 0.05)
 xgb_fast <- Lrnr_xgboost$new() # default with nrounds = 20 is pretty fast
 xgb_50 <- Lrnr_xgboost$new(nrounds = 50)
 ```
-We can use `Lrnr_define_interactions` to define interaction terms among 
-covariates. The interactions should be supplied as list of character vectors, 
-where each vector specifies an interaction. For example, we specify interactions 
-below between (1) `tr` (whether or not the subject received the WASH 
-intervention) and `elec` (whether or not the subject had electricity); and 
-between (2) `tr` and `hfiacat` (the subject's level of food security). 
+We can use `Lrnr_define_interactions` to define interaction terms among
+covariates. The interactions should be supplied as list of character vectors,
+where each vector specifies an interaction. For example, we specify
+interactions below between (1) `tr` (whether or not the subject received the
+WASH intervention) and `elec` (whether or not the subject had electricity); and
+between (2) `tr` and `hfiacat` (the subject's level of food security).
 
 ```{r interaction-learner}
 interactions <- list(c("elec", "tr"), c("tr", "hfiacat"))
 # main terms as well as the interactions above will be included
 lrn_interaction <- make_learner(Lrnr_define_interactions, interactions)
 ```
-What we just defined above is incomplete. In order to fit learners with these 
-interactions, we need to create a `Pipeline`. A `Pipeline` is a set of learners 
-to be fit sequentially, where the fit from one learner is used to define the 
-task for the next learner. We need to create a `Pipeline` with the interaction 
+What we just defined above is incomplete. In order to fit learners with these
+interactions, we need to create a `Pipeline`. A `Pipeline` is a set of learners
+to be fit sequentially, where the fit from one learner is used to define the
+task for the next learner. We need to create a `Pipeline` with the interaction
 defining learner and another learner that incorporate these terms when fitting
-a model. Let's create a learner pipeline that will fit a linear model with the 
-combination of main terms and interactions terms, as specified in 
+a model. Let's create a learner pipeline that will fit a linear model with the
+combination of main terms and interactions terms, as specified in
 `lrn_interaction_main`. 
 
 ```{r interaction-pipe}
@@ -511,13 +513,13 @@ xgb_learners <- apply(grid, MARGIN = 1, function(tuning_params) {
 xgb_learners
 ```
 
-Did you see `Lrnr_caret` when we called `sl3_list_learners(c("binomial"))`?
-All we need to specify to use this popular algorithm as a candidate in our 
-SL is the `algorithm` we want to tune, which is passed as `method` to 
-`caret::train()`. The default method for parameter selection criterion with is 
-set to "CV" instead of the `caret::train()` default `boot`. The summary metric 
-used to select the optimal model is `RMSE` for continuous outcomes and 
-`Accuracy` for categorical and binomial outcomes.
+Did you see `Lrnr_caret` when we called `sl3_list_learners(c("binomial"))`?  All
+we need to specify to use this popular algorithm as a candidate in our SL is
+the `algorithm` we want to tune, which is passed as `method` to `caret::train()`.
+The default method for parameter selection criterion with is set to "CV"
+instead of the `caret::train()` default `boot`. The summary metric used to
+select the optimal model is `RMSE` for continuous outcomes and `Accuracy` for
+categorical and binomial outcomes.
 
 ```{r carotene, eval = FALSE}
 # Unlike xgboost, I have no idea how to tune a neural net or BART machine, so
@@ -545,22 +547,26 @@ stack <- make_learner(
 stack
 ```
 
-We can also stack the learners by first creating a vector, and then 
-instantiating the stack. I prefer this method, since it easily allows us to 
+We can also stack the learners by first creating a vector, and then
+instantiating the stack. I prefer this method, since it easily allows us to
 modify the names of the learners.
 
 ```{r alt-stack}
 # named vector of learners first
-learners <- c(lrn_glm, lrn_polspline, lrn_enet.5, lrn_ridge, lrn_lasso, xgb_50)
-names(learners) <- c("glm", "polspline", "enet.5", "ridge", "lasso", "xgboost50")
+learners <- c(
+  lrn_glm, lrn_polspline, lrn_enet.5, lrn_ridge, lrn_lasso, xgb_50
+)
+names(learners) <- c(
+  "glm", "polspline", "enet.5", "ridge", "lasso", "xgboost50"
+)
 # next make the stack
 stack <- make_learner(Stack, learners)
 # now the names are pretty
 stack
 ```
 
-We're jumping ahead a bit, but let's check something out quickly. It's 
-straightforward, and just one more step, to set up this stack such that 
+We're jumping ahead a bit, but let's check something out quickly. It's
+straightforward, and just one more step, to set up this stack such that
 all of the learners will train in a cross-validated manner.
 
 ```{r alt-stack-cv}
@@ -571,37 +577,37 @@ cv_stack
 #### Screening Algorithms for Feature Selection {-}
 
 We can optionally select a subset of available covariates and pass only
-those variables to the modeling algorithm. The current set of learners that 
-can be used for prescreening covariates is included below. 
+those variables to the modeling algorithm. The current set of learners that
+can be used for prescreening covariates is included below.
 
-- `Lrnr_screener_importance` selects `num_screen` (default = 5) covariates 
-  based on the variable importance ranking provided by the `learner`. Any 
-  learner with an "importance" method can be used in `Lrnr_screener_importance`; 
-  and this currently includes `Lrnr_ranger`, `Lrnr_randomForest`, and 
-  `Lrnr_xgboost`. 
+- `Lrnr_screener_importance` selects `num_screen` (default = 5) covariates
+  based on the variable importance ranking provided by the `learner`. Any
+  learner with an "importance" method can be used in `Lrnr_screener_importance`;
+  and this currently includes `Lrnr_ranger`, `Lrnr_randomForest`, and
+  `Lrnr_xgboost`.
 - `Lrnr_screener_coefs`, which provides screening of covariates based on the
   magnitude of their estimated coefficients in a (possibly regularized) GLM.
-  The `threshold` (default = 1e-3) defines the minimum absolute size of the 
-  coefficients, and thus covariates, to be kept. Also, a `max_retain` argument 
-  can be optionally provided to restrict the number of selected covariates to be 
+  The `threshold` (default = 1e-3) defines the minimum absolute size of the
+  coefficients, and thus covariates, to be kept. Also, a `max_retain` argument
+  can be optionally provided to restrict the number of selected covariates to be
   no more than `max_retain`.
-- `Lrnr_screener_correlation` provides covariate screening procedures by 
-  running a test of correlation (Pearson default), and then selecting the (1) 
-  top ranked variables (default), or (2) the variables with a pvalue lower than 
+- `Lrnr_screener_correlation` provides covariate screening procedures by
+  running a test of correlation (Pearson default), and then selecting the (1)
+  top ranked variables (default), or (2) the variables with a pvalue lower than
   some pre-specified threshold.
-- `Lrnr_screener_augment` augments a set of screened covariates with additional    
-  covariates that should be included by default, even if the screener did not 
-  select them. An example of how to use this screener is included below. 
-   
+- `Lrnr_screener_augment` augments a set of screened covariates with additional
+  covariates that should be included by default, even if the screener did not
+  select them. An example of how to use this screener is included below.
+
 Let's consider screening covariates based on their `randomForest` variable
 importance ranking (ordered by mean decrease in accuracy). To select the top
 5 most important covariates according to this ranking, we can combine
-`Lrnr_screener_importance` with `Lrnr_ranger` (limiting the number of trees by 
-setting `ntree = 20`). 
+`Lrnr_screener_importance` with `Lrnr_ranger` (limiting the number of trees by
+setting `ntree = 20`).
 
 Hang on! Before you think it -- I will confess: Bob Ross and I both know that 20
-trees makes for a lonely forest, and I shouldn't consider it, but these are the 
-sacrifices I have to make for this chapter to build in time! 
+trees makes for a lonely forest, and I shouldn't consider it, but these are the
+sacrifices I have to make for this chapter to build in time!
 
 ```{r screener}
 miniforest <- Lrnr_ranger$new(
@@ -617,7 +623,7 @@ screen_rf
 screen_rf$train(washb_task)
 ```
 
-An example of how to format `Lrnr_screener_augment` is included below for 
+An example of how to format `Lrnr_screener_augment` is included below for
 clarity.
 ```{r screener-augment}
 keepme <- c("aged", "momage")
@@ -628,9 +634,9 @@ screen_augment_rf <- Lrnr_screener_augment$new(
 screen_augment_rf
 ```
 
-Selecting covariates with non-zero lasso coefficients is quite common. Let's 
-construct `Lrnr_screener_coefs` screener that does just that, and test it 
-out. 
+Selecting covariates with non-zero lasso coefficients is quite common. Let's
+construct `Lrnr_screener_coefs` screener that does just that, and test it
+out.
 
 ```{r screener-coefs}
 # we already instantiated a lasso learner above, no need to do it again
@@ -639,14 +645,14 @@ screen_lasso
 ```
 
 To **"pipe"** only the selected covariates to the modeling algorithm, we need to
-make a `Pipeline`, similar to the one we built for the regression model with 
-interaction terms. 
+make a `Pipeline`, similar to the one we built for the regression model with
+interaction terms.
 
 ```{r screener-pipe}
 screen_rf_pipe <- make_learner(Pipeline, screen_rf, stack)
 screen_lasso_pipe <- make_learner(Pipeline, screen_lasso, stack)
 ```
-Now, these learners with no internal screening will be preceded by a screening 
+Now, these learners with no internal screening will be preceded by a screening
 step.
 
 We also consider the original `stack`, to compare how the feature selection
@@ -666,18 +672,18 @@ fancy_stack
 ```
 
 We will use the [default
-metalearner](https://github.com/tlverse/sl3/blob/master/R/default_metalearner.R),
+metalearner](https://tlverse.org/sl3/reference/default_metalearner.html),
 which uses
-[`Lrnr_solnp()`](https://github.com/tlverse/sl3/blob/master/R/Lrnr_solnp.R) to
+[`Lrnr_solnp`](https://tlverse.org/sl3/reference/Lrnr_solnp.html) to
 provide fitting procedures for a pairing of [loss
-function](https://github.com/tlverse/sl3/blob/master/R/loss_functions.R) and
+function](https://tlverse.org/sl3/reference/loss_functions.html) and
 [metalearner
-function](https://github.com/tlverse/sl3/blob/master/R/metalearners.R). This
+function](https://tlverse.org/sl3/reference/metalearners.html). This
 default metalearner selects a loss and metalearner pairing based on the outcome
 type. Note that any learner can be used as a metalearner.
 
-Now that we have made a diverse stack of base learners, we are ready to make the 
-SL. The SL algorithm fits a metalearner on the validation set 
+Now that we have made a diverse stack of base learners, we are ready to make the
+SL. The SL algorithm fits a metalearner on the validation set
 predictions/losses across all folds.
 
 ```{r make-sl}
@@ -693,10 +699,10 @@ Learners](https://tlverse.org/sl3/articles/custom_lrnrs.html) which can be used
 in all the places you could otherwise use any other `sl3` learners, including
 `Pipelines`, `Stacks`, and the SL.
 
-Recall that the discrete SL, or cross-validated selector, is a metalearner that 
-assigns a weight of 1 to the learner with the lowest cross-validated empirical 
-risk, and weight of 0 to all other learners. This metalearner specification can 
-be invoked with `Lrnr_cv_selector`. 
+Recall that the discrete SL, or cross-validated selector, is a metalearner that
+assigns a weight of 1 to the learner with the lowest cross-validated empirical
+risk, and weight of 0 to all other learners. This metalearner specification can
+be invoked with `Lrnr_cv_selector`.
 
 ```{r make-sl-discrete}
 discrete_sl_metalrn <- Lrnr_cv_selector$new()
@@ -706,8 +712,8 @@ discrete_sl <- Lrnr_sl$new(
 )
 ```
 <!--
-In the plot below, we visualize the steps for executing the Super Learner in the
-`tlverse/delayed` framework. For those like myself who are not particularly
+In the plot below, we visualize the steps for executing the Super Learner in
+the `tlverse/delayed` framework. For those like myself who are not particularly
 keen on understanding the intricacies of `delayed`, let's focus on the main
 point of this figure: we can see there are 10 realizations of the stack which
 represent the 10 cross-validation folds and there is a separate hold-out
@@ -721,7 +727,7 @@ plot(dt_sl, color = FALSE, height = "400px", width = "90%")
 
 ### 3. Train the Super Learner on the machine learning task {-}
 
-The SL algorithm fits a metalearner on the validation-set predictions in a 
+The SL algorithm fits a metalearner on the validation-set predictions in a
 cross-validated manner, thereby avoiding overfitting.
 
 Now we are ready to **"train"** our SL on our `sl3_task` object, `washb_task`.
@@ -733,7 +739,7 @@ sl_fit <- sl$train(washb_task)
 
 ### 4. Obtain predicted values {-}
 
-Now that we have fit the SL, we are ready to calculate the predicted outcome 
+Now that we have fit the SL, we are ready to calculate the predicted outcome
 for each subject.
 
 ```{r sl-predictions}
@@ -744,7 +750,7 @@ head(sl_preds)
 <!--
 Below we visualize the observed versus predicted values.
 
-For fun, we will also include the cross-validated predictions from most popular 
+For fun, we will also include the cross-validated predictions from most popular
 learner on the block, main terms linear regression.
 
 
@@ -765,31 +771,31 @@ We can also obtain a summary of the results.
 ```{r, sl-summary}
 sl_fit_summary <- sl_fit$print()
 ```
-From the table of the printed SL fit, we note that the SL had a mean risk of 
-`r round(sl_fit_summary$mean_risk[length(sl_fit_summary$learner)], 4)` and that 
-this ensemble weighted the `ranger` and `glmnet` learners highest while not 
+From the table of the printed SL fit, we note that the SL had a mean risk of `r
+round(sl_fit_summary$risk[length(sl_fit_summary$learner)], 4)` and that
+this ensemble weighted the `ranger` and `glmnet` learners highest while not
 weighting the `mean` learner highly.
 
 We can also see that the `glmnet` learner had the lowest cross-validated mean
-risk, thus making it the cross-validated selector (or the _discrete_ SL). The 
-mean risk of the SL is calculated using all of the data, and not a separate 
+risk, thus making it the cross-validated selector (or the _discrete_ SL). The
+mean risk of the SL is calculated using all of the data, and not a separate
 hold-out, so the SL's mean risk that is reported here is an underestimation.
 
 ## Cross-validated Super Learner {-}
 
-We can cross-validate the SL to see how well the SL performs on unseen data, 
-and obtain an estimate of the cross-validated risk of the SL.
+We can cross-validate the SL to see how well the SL performs on unseen data, and
+obtain an estimate of the cross-validated risk of the SL.
 
-This estimation procedure requires an "outer/external" layer of 
-cross-validation, also called nested cross-validation, which involves setting 
-aside a separate holdout sample that we don’t use to fit the SL. This external 
-cross-validation procedure may also incorporate 10 folds, which is the default 
-in `sl3`. However, we will incorporate 2 outer/external folds of 
+This estimation procedure requires an "outer/external" layer of
+cross-validation, also called nested cross-validation, which involves setting
+aside a separate holdout sample that we don’t use to fit the SL. This external
+cross-validation procedure may also incorporate 10 folds, which is the default
+in `sl3`. However, we will incorporate 2 outer/external folds of
 cross-validation for computational efficiency.
 
-We also need to specify a loss function to evaluate SL. Documentation for the 
-available loss functions can be found in the [`sl3` Loss
-Function Reference](https://tlverse.org/sl3/reference/loss_functions.html).
+We also need to specify a loss function to evaluate SL. Documentation for the
+available loss functions can be found in the [`sl3` Loss Function
+Reference](https://tlverse.org/sl3/reference/loss_functions.html).
 
 ```{r CVsl}
 washb_task_new <- make_sl3_Task(
@@ -816,24 +822,23 @@ collaborators, so we created a variable importance function in `sl3`! The `sl3`
 `importance` function returns a table with variables listed in decreasing order
 of importance (i.e., most important on the first row).
 
-The measure of importance in `sl3` is based on a risk ratio, or risk 
-difference, between the learner fit with a removed, or permuted, covariate and 
-the learner fit with the true covariate, across all covariates. In this manner, 
-the larger the risk difference, the more important the variable is in the 
-prediction.
+The measure of importance in `sl3` is based on a risk ratio, or risk difference,
+between the learner fit with a removed, or permuted, covariate and the learner
+fit with the true covariate, across all covariates. In this manner, the larger
+the risk difference, the more important the variable is in the prediction.
 
 The intuition of this measure is that it calculates the risk (in terms of the
 average loss in predictive accuracy) of losing one covariate, while keeping
 everything else fixed, and compares it to the risk if the covariate was not
-lost. If this risk ratio is one, or risk difference is zero, then losing that 
-covariate had no impact, and is thus not important by this measure. We do this 
-across all of the covariates. As stated above, we can remove the covariate and 
-refit the SL without it, or we just permute the covariate (faster, more risky) 
-and hope for the shuffling to distort any meaningful information that was 
-present in the covariate. This idea of permuting instead of removing saves a 
-lot of time, and is also incorporated in the `randomForest` variable importance 
-measures. However, the permutation approach is risky, so the importance 
-function default is to remove and refit.
+lost. If this risk ratio is one, or risk difference is zero, then losing that
+covariate had no impact, and is thus not important by this measure. We do this
+across all of the covariates. As stated above, we can remove the covariate and
+refit the SL without it, or we just permute the covariate (faster, more risky)
+and hope for the shuffling to distort any meaningful information that was
+present in the covariate. This idea of permuting instead of removing saves a lot
+of time, and is also incorporated in the `randomForest` variable importance
+measures. However, the permutation approach is risky, so the importance function
+default is to remove and refit.
 
 Let's explore the `sl3` variable importance measurements for the `washb` data.
 
@@ -885,11 +890,11 @@ head(chspred) %>%
    not consider BART or HAL). Customize hyperparameters for one of your
    learners. Feel free to use learners from `sl3` or `SuperLearner`. You may
    use the same base learning library that is presented above.
-3. Incorporate at least one pipeline with feature selection. Any screener and 
+3. Incorporate at least one pipeline with feature selection. Any screener and
    learner(s) can be used.
 4. Fit the metalearning step with the default metalearner.
-5. With the metalearner and base learners, make the Super Learner (SL) and train 
-   it on the task.
+5. With the metalearner and base learners, make the Super Learner (SL) and
+   train it on the task.
 6. Print your SL fit by calling `print()` with `$`.
 7. Cross-validate your SL fit to see how well it performs on unseen
    data. Specify a valid loss function to evaluate the SL.
@@ -903,9 +908,9 @@ participated in the International Stroke Trial (IST). This data is described in
 [Chapter 3.2 of the `tlverse`
 handbook](https://tlverse.org/tlverse-handbook/data.html#ist).
 
-1. Train a SL to predict recurrent stroke `DRSISC` with the available covariate 
-   data (the 25 other variables). Of course, you can consider feature selection 
-   in the machine learning algorithms. In this data, the outcome is 
+1. Train a SL to predict recurrent stroke `DRSISC` with the available covariate
+   data (the 25 other variables). Of course, you can consider feature selection
+   in the machine learning algorithms. In this data, the outcome is
    occasionally missing, so be sure to specify `drop_missing_outcome = TRUE`
    when defining the task.
 2. Use the SL-based predictions to calculate the area under the ROC curve (AUC).
@@ -1067,67 +1072,67 @@ validation sample is $P_{n,B_n}^1$.
 ## Concluding Remarks
 
 - Super Learner (SL) is a general approach that can be applied to a diversity of
-  estimation and prediction problems which can be defined by a loss function. 
-  
-- It would be straightforward to plug in the estimator returned by SL into the 
-  target parameter mapping. 
-    + For example, suppose we are after the average treatment effect (ATE) of a 
-      binary treatment intervention: 
+  estimation and prediction problems which can be defined by a loss function.
+
+- It would be straightforward to plug in the estimator returned by SL into the
+  target parameter mapping.
+    + For example, suppose we are after the average treatment effect (ATE) of a
+      binary treatment intervention:
       $\Psi_0 = E_{0,W}[E_0(Y|A=1,W) - E_0(Y|A=0,W)]$.
-    + We could use the SL that was trained on the original data (let's call 
-      this `sl_fit`) to predict the outcome for all subjects under each 
-      intervention. All we would need to do is take the average difference 
+    + We could use the SL that was trained on the original data (let's call
+      this `sl_fit`) to predict the outcome for all subjects under each
+      intervention. All we would need to do is take the average difference
       between the counterfactual outcomes under each intervention of interest.
-    + Considering $\Psi_0$ above, we would first need two $n$-length vectors of 
-      predicted outcomes under each intervention. One vector would represent the 
-      predicted outcomes under an intervention that sets all subjects to 
-      receive $A=1$, $Y_i|A_i=1,W_i$ for all $i=1,\ldots,n$. The other vector 
-      would represent the predicted outcomes under an intervention that sets 
-      all subjects to receive $A=0$, $Y_i|A_i=0,W_i$ for all $i=1,\ldots,n$. 
-    + After obtaining these vectors of counterfactual predicted outcomes, all 
-      we would need to do is average and then take the difference in order to 
-      "plug-in" the SL estimator into the target parameter mapping. 
-    + In `sl3` and with our current ATE example, this could be achieved with 
+    + Considering $\Psi_0$ above, we would first need two $n$-length vectors of
+      predicted outcomes under each intervention. One vector would represent the
+      predicted outcomes under an intervention that sets all subjects to
+      receive $A=1$, $Y_i|A_i=1,W_i$ for all $i=1,\ldots,n$. The other vector
+      would represent the predicted outcomes under an intervention that sets
+      all subjects to receive $A=0$, $Y_i|A_i=0,W_i$ for all $i=1,\ldots,n$.
+    + After obtaining these vectors of counterfactual predicted outcomes, all
+      we would need to do is average and then take the difference in order to
+      "plug-in" the SL estimator into the target parameter mapping.
+    + In `sl3` and with our current ATE example, this could be achieved with
       `mean(sl_fit$predict(A1_task)) - mean(sl_fit$predict(A0_task))`;
-      where `A1_task$data` would contain all 1's (or the level that pertains to 
-      receiving the treatment) for the treatment column in the data (keeping all 
-      else the same), and `A0_task$data` would contain all 0's (or the level 
-      that pertains to not receiving the treatment) for the treatment column in 
-      the data. 
-- It's a worthwhile exercise to obtain the predicted counterfactual outcomes 
+      where `A1_task$data` would contain all 1's (or the level that pertains to
+      receiving the treatment) for the treatment column in the data (keeping all
+      else the same), and `A0_task$data` would contain all 0's (or the level
+      that pertains to not receiving the treatment) for the treatment column in
+      the data.
+- It's a worthwhile exercise to obtain the predicted counterfactual outcomes
   and create these counterfactual `sl3` tasks. It's too biased; however, to
-  plug the SL fit into the target parameter mapping, (e.g., calling the result 
-  of `mean(sl_fit$predict(A1_task)) - mean(sl_fit$predict(A0_task))` the 
-  estimated ATE. We would end up with an estimator for the ATE that was 
-  optimized for estimation of the prediction function, and not the ATE! 
-- At the end of the "analysis day", we want an estimator that is optimized for 
-  our target estimand of interest. We ultimately care about doing a good job 
-  estimating $\psi_0$. The SL is an essential step to help us get there. In 
-  fact, we will use the counterfactual predicted outcomes that were explained 
-  at length above. However, SL is not the end of the estimation procedure. 
-  Specifically, the Super Learner would not be an asymptotically linear 
-  estimator of the target estimand; and it is not an efficient substitution 
-  estimator. This begs the question, why is it so important for an estimator to 
-  possess these properties? 
-  
+  plug the SL fit into the target parameter mapping, (e.g., calling the result
+  of `mean(sl_fit$predict(A1_task)) - mean(sl_fit$predict(A0_task))` the
+  estimated ATE. We would end up with an estimator for the ATE that was
+  optimized for estimation of the prediction function, and not the ATE!
+- At the end of the "analysis day", we want an estimator that is optimized for
+  our target estimand of interest. We ultimately care about doing a good job
+  estimating $\psi_0$. The SL is an essential step to help us get there. In
+  fact, we will use the counterfactual predicted outcomes that were explained
+  at length above. However, SL is not the end of the estimation procedure.
+  Specifically, the Super Learner would not be an asymptotically linear
+  estimator of the target estimand; and it is not an efficient substitution
+  estimator. This begs the question, why is it so important for an estimator to
+  possess these properties?
+
   + An asymptotically linear estimator converges to the estimand a
-    $\frac{1}{\sqrt{n}}$ rate, thereby permitting formal statistical inference 
-    (i.e., confidence intervals and $p$-values). 
-  + Substitution, or plug-in, estimators of the estimand are desirable because 
-    they respect both the local and global constraints of the statistical model 
-    (e.g., bounds), and have they have better finite-sample properties. 
+    $\frac{1}{\sqrt{n}}$ rate, thereby permitting formal statistical inference
+    (i.e., confidence intervals and $p$-values).
+  + Substitution, or plug-in, estimators of the estimand are desirable because
+    they respect both the local and global constraints of the statistical model
+    (e.g., bounds), and have they have better finite-sample properties.
   + An efficient estimator is optimal in the sense that it has the lowest
-    possible variance, and is thus the most precise. An estimator is efficient 
-    if and only if is asymptotically linear with influence curve equal to the 
+    possible variance, and is thus the most precise. An estimator is efficient
+    if and only if is asymptotically linear with influence curve equal to the
     canonical gradient.
-    
-      + The canonical gradient is a mathematical object that is specific to 
-        the target estimand, and it provides information on the level of 
+
+      + The canonical gradient is a mathematical object that is specific to
+        the target estimand, and it provides information on the level of
         difficulty of the estimation problem. Various canonical gradient are
-        shown in the chapters that follow. 
-      + Practitioner's do not need to know how to calculate a canonical 
-        gradient in order to understand efficiency and use Targeted Maximum 
-        Likelihood Estimation (TMLE). Metaphorically, you do not need to be 
+        shown in the chapters that follow.
+      + Practitioner's do not need to know how to calculate a canonical
+        gradient in order to understand efficiency and use Targeted Maximum
+        Likelihood Estimation (TMLE). Metaphorically, you do not need to be
         Yoda in order to be a Jedi.
 
 - TMLE is a general strategy that succeeds in constructing efficient and
