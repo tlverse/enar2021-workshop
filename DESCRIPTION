@@ -22,8 +22,8 @@ Imports:
   mvtnorm,
   skimr,
   delayed,
-  origami,
-  sl3,
+  origami (>= 1.0.3),
+  sl3 (>= 1.4.3),
   tmle3,
   tmle3mopttx,
   tmle3shift
@@ -44,10 +44,10 @@ Suggests:
 Remotes:
   rstudio/bslib,
   rstudio/bookdown,
-  tlverse/sl3@devel,
   tlverse/tmle3@master,
   tlverse/tmle3mopttx@5ba5f65,
-  tlverse/tmle3shift@master
+  tlverse/tmle3shift@master,
+  tlverse/sl3@devel
 URL:
   https://github.com/tlverse/enar2021-workshop,
   https://tlverse.org/enar2021-workshop
