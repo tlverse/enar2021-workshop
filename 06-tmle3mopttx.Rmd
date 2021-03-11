@@ -1,4 +1,4 @@
-# Optimal Individualized Treatment Regimes
+# Optimal Individualized Treatment Regimes (optional)
 
 _Ivana Malenica_
 
