@@ -109,53 +109,33 @@ knitr::include_graphics("img/misc/vs.pdf")
 
 #### General step-by-step overview of the Super Learner algorithm
 
-1. Break up the sample, evenly, into $V$-folds (i.e., splits). Let's say we 
-   have $n$ independent and identically distributed observations in the 
-   sample.
-2. For each of these (say $V=10$) folds:
-    a. Remove that portion of the sample (kept out as validation sample) and 
-       what's remaining will be used to fit learners (training sample).
-    b. Fit each learner on the training sample. Let's say we have $k$ number 
-       of learners.
-    c. Predict the outcomes in the validation sample using each of the $k$ 
-       trained learners. We will call these predictions "cross-validated"; since 
-       they were obtained from the validation sample's covariate information, 
-       which was never seen while fitting these models. Let's call 
-       $n_{validation}$ the number of validation samples, then we would end up 
-       with a $n_{validation} \by k$ matrix of "cross-validated" predictions. 
-       Recall that $n_{validation}$ should only be 1/10 of the sample for 
-       $V=10$-fold cross-validation.
- 3. Bind together the rows of the 10 $n_{validation} \by k$ matrices of 
-    cross-validated predictions, to obtain an $n \by k$ matrix of 
-    cross-validated predictions. This matrix is often referred to as the 
-    "level-one" or "Z" matrix.
- 4. Retain the observed outcome $Y$ for each of the $n$ observations, and use 
-    them to measure the "loss" of each cross-validated prediction 
-    (e.g., (Y − \hat{Y}^2$). Then, for each column, take the (potentially 
-    weighted) mean across all of the $n$ losses, so we have a measure of 
-    performance, which we call the "cross-validated empirical risk", for each 
-    of the $k$ learners. 
- 5. Choose the Super Learner (SL). The so-called "metalearner" function is 
-    responsible for this, and the metalearner is just a function that assigns a 
-    weight to each of the $k$ learner's. This weighted combination of $k$ 
-    learners is the SL. 
-     a. The discrete SL (or cross-validated selector) employs a simple 
-        metalearner that assigns weight of 1 to the single learner with 
-        smallest cross-validated risk, and weight of 0 to all other learners. 
-     b. The ensemble SL (often referred to just as the "Super Learner") employs 
-        a metalearner that assigns weights that minimize the cross-validated 
-        risk (e.g., non-negative least squares regression). This often results 
-        in more than one learner having positive weight. Aggressive 
-        metalearning (e.g., assigning negative weight) comes with consequences 
-        that we will discuss later.
-  6. Fit the learners on the entire sample of $n$ observations, ignoring the 
-     cross-validation folds/procedure, and use the weights that were obtained 
-     in step 5 to get the SL fit. 
-  7. Predictions, variable importance, and/or a cross-validated SL can be 
-     obtained from an SL fit (like most other learners). The cross-validated SL 
-     provides an estimate of the performance of the SL on unseen data, and 
-     incorporates a outer layer of cross-validation in order to cross-validate
-     this entire procedure.
+- Break up the sample evenly into V-folds (say V=10).
+- For each of these 10 folds, remove that portion of the sample (kept out as
+  validation sample) and the remaining will be used to fit learners (training
+  sample).
+- Fit each learner on the training sample (note, some learners will have their
+  own internal cross-validation procedure or other methods to select tuning
+  parameters).
+- For each observation in the corresponding validation sample, predict the outcome
+  using each of the learners, so if there are $p$ learners, then there would be
+  $p$ predictions.
+- Take out another validation sample and repeat until each of the V-sets of data
+  are removed.
+- Compare the cross-validated fit of the learners across all observations based
+  on specified loss function (e.g., squared error, negative log-likelihood, ...)
+  by calculating the corresponding average loss (risk).
+- Either:
+
+  + choose the learner with smallest risk and apply that learner to entire data
+    set (resulting SL fit),
+  + do a weighted average of the learners to minimize the cross-validated risk
+    (construct an ensemble of learners), by
+
+    + re-fitting the learners on the original data set, and
+    + use the weights above to get the SL fit.
+
+Note, this entire procedure can be itself cross-validated to get a consistent
+estimate of the future performance of the SL fit.
      
 ```{r cv_fig2, fig.show="hold", echo = FALSE}
 knitr::include_graphics("img/misc/SLKaiserNew.pdf")
