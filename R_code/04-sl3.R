@@ -439,7 +439,3 @@ ist_task_CVsl <- make_sl3_Task(
 ##     main = "Variable Importance for Predicting Recurrent Ischemic Stroke"
 ##   )
 
-
-## ----ex3-key, eval=FALSE------------------------------------------------------
-## # TODO
-
