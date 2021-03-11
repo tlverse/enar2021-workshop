@@ -44,10 +44,10 @@ Suggests:
 Remotes:
   rstudio/bslib,
   rstudio/bookdown,
-  tlverse/tmle3@master,
+  tlverse/sl3@devel,
+  tlverse/tmle3@devel,
   tlverse/tmle3mopttx@5ba5f65,
-  tlverse/tmle3shift@master,
-  tlverse/sl3@devel
+  tlverse/tmle3shift
 URL:
   https://github.com/tlverse/enar2021-workshop,
   https://tlverse.org/enar2021-workshop
