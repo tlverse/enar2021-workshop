@@ -82,26 +82,27 @@ necessary.  Familiarity with the `R` programming language will be essential.
 
 ## Outline {-}
 
-* 08:00-08:10A: Introductions
-* 08:10-09:00A: The Roadmap of Targeted Learning and [Why We Need A Statistical
+* 08:00-08:50A: The Roadmap of Targeted Learning and [Why We Need A Statistical
   Revolution](https://senseaboutscienceusa.org/super-learning-and-the-revolution-in-knowledge/)
-* 09:00-09:30A: Discussion
-* 09:30-10:00A: Morning Coffee Break
+* 08:50-09:20A: Discussion
+* 09:20-10:00A: Morning Coffee Break + Introductions
 * 10:00-10:30A: [Introduction to the `tlverse` Software
   Ecosystem](https://tlverse.org) and the [WASH Benefits
-  Data](http://www.washbenefits.net/)
-* 10:30-11:30A: Ensemble machine learning with the [`sl3` `R`
+  data](http://www.washbenefits.net/)
+* 10:30-11:30A: Super learning with the [`sl3` `R`
   package](https://github.com/tlverse/sl3)
 * 11:30A-12:30P: Exercises with `sl3`
-* 12:30-01:30P: Lunch Break
+* 12:30-01:30P: Lunch Break with Q&A (optional)
 * 01:30-02:30P: Targeted Learning for causal inference with the [`tmle3` `R`
   package](https://github.com/tlverse/tmle3)
 * 02:30-03:30P: Exercises with `tmle3`
 * 03:30-03:45P: Afternoon Coffee Break
 * 03:45-05:00P: Optimal treatment regimes with the [`tmle3mopttx` `R`
-  package](https://github.com/tlverse/tmle3mopttx) and/or concluding discussion
+  package](https://github.com/tlverse/tmle3mopttx), stochastic treatment 
+  regimes with the [`tmle3shift` `R` 
+  package](https://github.com/tlverse/tmle3shift), and/or concluding discussion
 
-__NOTE: All times are in ET.__
+__NOTE: All times are in Eastern Time.__
 
 ## About the instructors {-}
 
