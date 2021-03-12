@@ -1,71 +1,143 @@
 # The TMLE Framework {#tmle3}
 
-_Jeremy Coyle_
+_Jeremy Coyle_ and _Nima Hejazi_
 
 Based on the [`tmle3` `R` package](https://github.com/tlverse/tmle3).
 
-## Learning Objectives
-1. Understand why we use TMLE for effect estimation
-2. Use `tmle3` to estimate an Average Treatment Effect (ATE)
-3. Understand `tmle3` "Specs"
-4. Fit `tmle3` for a custom set of parameters
-5. Use the delta method to estimate transformations of parameters
+## Learning Objectives {#learn-tmle}
 
-## Introduction
+By the end of this chapter, you will be able to
 
-In the previous chapter on `sl3` we learned how to estimate a regression function like $E[Y|X]$ from data. That's an important first step in learning from data, but how can we use this predictive model to estimate statistical and causal effects?
+1. Understand why we use TMLE for effect estimation.
+2. Use `tmle3` to estimate an Average Treatment Effect (ATE).
+3. Understand how to use `tmle3` "Specs" objects.
+4. Fit `tmle3` for a custom set of target parameters.
+5. Use the delta method to estimate transformations of target parameters.
 
-Going back to the roadmap in Chapter 1, suppose we'd like to estimate the effect of a treatment variable $A$ on an outcome $Y$. As discussed, one potential parameter that characterizes that effect is the Average Treatment Effect ATE, defined as: $\psi_0=E_W[E[Y|A=1,W]-E[Y|A=0,W]]$ and interpreted as the difference in mean outcome under when treatment $A=1$ and $A=0$, averaging over the distribution of covariates $W$. We'll illustrate several potential estimators for this parameter, and motivate the use of TMLE, using the following example data:
+## Introduction {#tmle-intro}
+
+In the previous chapter on `sl3` we learned how to estimate a regression
+function like $\mathbb{E}[Y \mid X]$ from data. That's an important first step
+in learning from data, but how can we use this predictive model to estimate
+statistical and causal effects?
+
+Going back to [the roadmap for targeted learning](#intro), suppose we'd like to
+estimate the effect of a treatment variable $A$ on an outcome $Y$. As discussed,
+one potential parameter that characterizes that effect is the Average Treatment
+Effect (ATE), defined as $\psi_0 = \mathbb{E}_W[\mathbb{E}[Y \mid A=1,W] -
+\mathbb{E}[Y \mid A=0,W]]$ and interpreted as the difference in mean outcome
+under when treatment $A=1$ and $A=0$, averaging over the distribution of
+covariates $W$. We'll illustrate several potential estimators for this
+parameter, and motivate the use of the TMLE (targeted maximum likelihood
+estimation; targeted minimum loss-based estimation) framework, using the
+following example data:
 
 <img src="img/misc/tmle_sim/schematic_1_truedgd.png" width="80%" style="display: block; margin: auto;" />
 
-The small ticks on the right indicate the mean outcomes (averaging over $W$) under $A=1$ and $A=0$ respectively, so their difference is the quantity we'd like to estimate.
+The small ticks on the right indicate the mean outcomes (averaging over $W$)
+under $A=1$ and $A=0$ respectively, so their difference is the quantity we'd
+like to estimate.
 
-While we hope to motivate the application of TMLE in this chapter, we refer the interested reader to the two Targeted Learning books and associated works for full technical details.
+While we hope to motivate the application of TMLE in this chapter, we refer the
+interested reader to the two Targeted Learning books and associated works for
+full technical details.
 
-### Substitution Estimators
+## Substitution Estimators {#substitution-est}
 
-We can use `sl3` to fit a Super Learner or other regression model to estimate the function $E[Y|A,W]$. We refer to this function as $\bar{Q}_0(A,W)$ and our estimate of it as $\bar{Q}_n(A,W)$. We can then directly "plug-in" that estimate to obtain an estimate of the ATE:  $\hat{\psi}_n=\frac{1}{n}\sum(\bar{Q}_n(1,W)-\bar{Q}_n(0,W))$. This kind of estimator is called a plug-in or substitution estimator, as we substitute our estimate $Q_n(A,W)$ of the function $Q_0(A,W)$ for the function itself.
+We can use `sl3` to fit a Super Learner or other regression model to estimate
+the outcome regression function $\mathbb{E}_0[Y \mid A,W]$, which we often refer
+to as $\overline{Q}_0(A,W)$ and whose estimate we denote $\overline{Q}_n(A,W)$.
+To construct an estimate of the ATE $\psi_n$, we need only "plug-in" the
+estimates of $\overline{Q}_n(A,W)$, evaluated at the two intervention contrasts,
+to the corresponding ATE "plug-in" formula:
+$\psi_n = \frac{1}{n}\sum(\overline{Q}_n(1,W)-\overline{Q}_n(0,W))$. This kind
+of estimator is called a _plug-in_ or _substitution_ estimator, since accurate
+estimates $\psi_n$ of the parameter $\psi_0$ may be obtained by substituting
+estimates $\overline{Q}_n(A,W)$ for the relevant regression functions
+$\overline{Q}_0(A,W)$ themselves.
 
-
-Applying `sl3` to estimate the outcome regression in our example, we can see that it fits the data quite well:
+Applying `sl3` to estimate the outcome regression in our example, we can see
+that the ensemble machine learning predictions fit the data quite well:
 
 <img src="img/misc/tmle_sim/schematic_2b_sllik.png" width="80%" style="display: block; margin: auto;" />
 
-The solid lines indicate the `sl3` estimate of the regression function, with the dotted lines indicating the `tmle3` update described below.
+The solid lines indicate the `sl3` estimate of the regression function, with the
+dotted lines indicating the `tmle3` updates [(described below)](#tmle-updates).
 
-While substitution estimators are intuitive, naively using this approach with a Super Learner estimate of $\bar{Q}_0(A,W)$ has several limitations. First, Super Learner is selecting learner weights to minimize risk across the entire regression function, instead of "targeting" the ATE parameter we hope to estimate, leading to biased estimation. That is, `sl3` is trying to do well on the full regression curve on the left, instead of focusing on the small ticks on the right. What's more, the sampling distribution of this approach is not asymptotically linear, and therefore inference is not possible.
+While substitution estimators are intuitive, naively using this approach with a
+Super Learner estimate of $\bar{Q}_0(A,W)$ has several limitations. First, Super
+Learner is selecting learner weights to minimize risk across the entire
+regression function, instead of "targeting" the ATE parameter we hope to
+estimate, leading to biased estimation. That is, `sl3` is trying to do well on
+the full regression curve on the left, instead of focusing on the small ticks on
+the right. What's more, the sampling distribution of this approach is not
+asymptotically linear, and therefore inference is not possible.
 
-We can see these limitations illustrated in the estimates generated for the example data: 
+We can see these limitations illustrated in the estimates generated for the
+example data:
 
 <img src="img/misc/tmle_sim/schematic_3_effects.png" width="80%" style="display: block; margin: auto;" />
 
-We see that Super Learner, estimates the true parameter value (indicated by the dashed vertical line) more accurately than GLM. However, it is still less accurate than TMLE, and valid inference is not possible. In contrast, TMLE achieves a less biased estimator and valid inference.
+We see that Super Learner, estimates the true parameter value (indicated by the
+dashed vertical line) more accurately than GLM. However, it is still less
+accurate than TMLE, and valid inference is not possible. In contrast, TMLE
+achieves a less biased estimator and valid inference.
 
-## TMLE
+## Targeted Maximum Likelihood Estimation {#tmle}
 
-TMLE takes an initial estimate of $\bar{Q}_0(A,W)$ as well as an estimate of the propensity score $\bar{g}_0(A|W)=p(A|W)$ and produces an updated estimate $\bar{Q}^{\star}_0(A,W)$ that is "targeted" to the parameter of interest. TMLE keeps the benefits of substitution estimators (it is one), but augments the original estimates to correct for bias and also results in an asymptotically linear (and thus normally-distributed) estimator with consistent Wald-style confidence intervals.
+TMLE takes an initial estimate $\overline{Q}_n(A,W)$ as well as an estimate of
+the propensity score $g_n(A \mid W) = \mathbb{P}(A = 1 \mid W)$ and produces an
+updated estimate $\overline{Q}^{\star}_n(A,W)$ that is "targeted" to the
+parameter of interest. TMLE keeps the benefits of substitution estimators (it is
+one), but augments the original, potentially erratic estimates to _correct for
+bias_ while also resulting in an _asymptotically linear_ (and thus normally
+distributed) estimator that accommodates inference via asymptotically consistent
+Wald-style confidence intervals.
 
-There are different types of TMLE, sometimes for the same set of parameters, but below is an example of the algorithm for estimating the ATE. $\bar{Q}^{\star}_n(A,W)$ is the TMLE augmented estimate
-$f(\bar{Q}^{\star}_n(A,W)) = f(\bar{Q}_n(A,W)) + \epsilon_n \cdot h_n(A,W)$,
-where $f(\cdot)$ is the appropriate link function (e.g., logit), $\epsilon_n$
-is an estimated coefficient and $h_n(A,W)$ is a "clever covariate". In this case, $h_n(A,W) = \frac{A}{g_n(W)}-\frac{1-A}{1-g_n(W)}$, with $g_n(W)
-  = \mathbb{P}(A=1 \mid W)$ being the estimated (also by SL) propensity score,
-  so the estimator depends both on initial SL fit of the outcome regression
-  ($\bar{Q}_0$) and an SL fit of the propensity score ($g_n$).
+### TMLE Updates {#tmle-updates}
 
-There are further robust augmentations that are used in `tlverse`, such as an added layer of cross-validation to avoid over-fitting bias (CV-TMLE), and so called methods that can more robustly estimated several parameters simultaneously (e.g., the points on a survival curve).
+There are different types of TMLEs (and, sometimes, multiple for the same set of
+target parameters) -- below, we give an example of the algorithm for TML
+estimation of the ATE.  $\overline{Q}^{\star}_n(A,W)$ is the TMLE-augmented
+estimate $f(\overline{Q}^{\star}_n(A,W)) = f(\overline{Q}_n(A,W)) + \epsilon
+\cdot H_n(A,W)$, where $f(\cdot)$ is the appropriate link function (e.g.,
+$\text{logit}(x) = \log\left(\frac{x}{1 - x}\right)$), and an estimate
+$\epsilon_n$ of the coefficient $\epsilon$ of the "clever covariate" $H_n(A,W)$
+is computed. The form of the covariate $H_n(A,W)$ differs across target
+parameters; in this case of the ATE, it is $H_n(A,W) = \frac{A}{g_n(A \mid W)} -
+\frac{1-A}{1-g_n(A, W)}$, with $g_n(A,W) = \mathbb{P}(A=1 \mid W)$ being the
+estimated propensity score, so the estimator depends both on the initial fit (by
+`sl3`) of the outcome regression ($\overline{Q}_n$) and of the propensity score
+($g_n$).
 
-### Inference
+There are several robust augmentations that are used across the `tlverse`,
+including the use of an additional layer of cross-validation to avoid
+over-fitting bias (i.e., CV-TMLE) as well as approaches for more consistently
+estimating several parameters simultaneously (e.g., the points on a survival
+curve).
 
-Because TMLE yields an **asymptotically linear**, estimator, obtaining inference is trivial. Each TMLE is associated with an **influence function** that describes its asymptotic distribution, and Wald-style inference can be obtained by plugging into this function our estimates $\bar{Q}^{\star}_n$ and $g_n$ and taking the sample standard error. 
+### Statistical Inference {#tmle-infer}
 
-The following sections describe both a simple and more detailed way of specifying and estimating a TMLE in the `tlverse`. In designing `tmle3`, we sought to replicate as closely as possible the very general estimation framework of TMLE, and so each theoretical object relevant to TMLE is encoded in a corresponding software object. First, we will present the simple application of `tmle3` to the WASH Benefits exaple, and then go on to describe the underlying objects in more detail.
+Since TMLE yields an **asymptotically linear** estimator, obtaining statistical
+inference is very convenient. Each TML estimator has a corresponding
+**(efficient) influence function** (often, "EIF", for short) that describes the
+asymptotic distribution of the estimator. By using the estimated EIF, Wald-style
+inference (asymptotically correct confidence intervals) can be constructed
+simply by plugging into the form of the EIF our initial estimates
+$\overline{Q}^{\star}_n$ and $g_n$, then computing the sample standard error.
+
+The following sections describe both a simple and more detailed way of
+specifying and estimating a TMLE in the `tlverse`. In designing `tmle3`, we
+sought to replicate as closely as possible the very general estimation framework
+of TMLE, and so each theoretical object relevant to TMLE is encoded in a
+corresponding software object/method. First, we will present the simple
+application of `tmle3` to the WASH Benefits example, and then go on to describe
+the underlying objects in greater detail.
 
 ## Easy-Bake Example: `tmle3` for ATE
 
 We'll illustrate the most basic use of TMLE using the WASH Benefits data
-introduced earlier and estimating an Average Treatment Effect (ATE).
+introduced earlier and estimating an average treatment effect.
 
 ### Load the Data
 
@@ -115,13 +187,15 @@ node_list <- list(
 
 Currently, missingness in `tmle3` is handled in a fairly simple way:
 
-* Missing covariates are median (for continuous) or mode (for discrete)
-  imputed, and additional covariates indicating imputation are generated
-* Observations missing either treatment or outcome variables are excluded.
-
-We implemented IPCW-TMLE to more efficiently handle missingness in the outcome
-variable, and we plan to implement an IPCW-TMLE to handle missingness in the
-treatment variable as well.
+* Missing covariates are median- (for continuous) or mode- (for discrete)
+  imputed, and additional covariates indicating imputation are generated, just
+  as described in [the `sl3` chapter](#sl3).
+* Missing treatment variables are excluded -- such observations are dropped.
+* Missing outcomes are efficiently handled by the automatic calculation (and
+  incorporation into estimators) of _inverse probability of censoring weights_
+  (IPCW); this is also known as IPCW-TMLE and may be thought of as a joint
+  intervention to remove missingness and is analogous to the procedure used with
+  classical inverse probability weighted estimators.
 
 These steps are implemented in the `process_missing` function in `tmle3`:
 
@@ -137,8 +211,8 @@ node_list <- processed$node_list
 `tmle3` is general, and allows most components of the TMLE procedure to be
 specified in a modular way. However, most end-users will not be interested in
 manually specifying all of these components. Therefore, `tmle3` implements a
-`tmle3_Spec` object that bundles a set ofcomponents into a _specification_
-that, with minimal additional detail, can be run by an end-user.
+`tmle3_Spec` object that bundles a set of components into a _specification_
+("Spec") that, with minimal additional detail, can be run by an end-user.
 
 We'll start with using one of the specs, and then work our way down into the
 internals of `tmle3`.
@@ -163,7 +237,7 @@ to be estimated with `sl3`:
 ```r
 # choose base learners
 lrnr_mean <- make_learner(Lrnr_mean)
-lrnr_xgb <- make_learner(Lrnr_xgboost)
+lrnr_rf <- make_learner(Lrnr_ranger)
 
 # define metalearners appropriate to data types
 ls_metalearner <- make_learner(Lrnr_nnls)
@@ -172,11 +246,11 @@ mn_metalearner <- make_learner(
   loss_loglik_multinomial
 )
 sl_Y <- Lrnr_sl$new(
-  learners = list(lrnr_mean, lrnr_xgb),
+  learners = list(lrnr_mean, lrnr_rf),
   metalearner = ls_metalearner
 )
 sl_A <- Lrnr_sl$new(
-  learners = list(lrnr_mean, lrnr_xgb),
+  learners = list(lrnr_mean, lrnr_rf),
   metalearner = mn_metalearner
 )
 learner_list <- list(A = sl_A, Y = sl_Y)
@@ -194,10 +268,10 @@ We now have everything we need to fit the tmle using `tmle3`:
 tmle_fit <- tmle3(ate_spec, washb_data, node_list, learner_list)
 print(tmle_fit)
 #> A tmle3_Fit that took 1 step(s)
-#>    type                                    param init_est    tmle_est       se
-#> 1:  ATE ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] 0.002628 -0.00073865 0.050391
-#>        lower    upper psi_transformed lower_transformed upper_transformed
-#> 1: -0.099503 0.098026     -0.00073865         -0.099503          0.098026
+#>    type                                    param   init_est tmle_est      se
+#> 1:  ATE ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] -0.0035831 0.010337 0.05064
+#>        lower   upper psi_transformed lower_transformed upper_transformed
+#> 1: -0.088915 0.10959        0.010337         -0.088915           0.10959
 ```
 
 ### Evaluate the Estimates
@@ -208,7 +282,7 @@ can extra results from the summary by indexing into it:
 ```r
 estimates <- tmle_fit$summary$psi_transformed
 print(estimates)
-#> [1] -0.00073865
+#> [1] 0.010337
 ```
 
 ## `tmle3` Components
@@ -220,7 +294,7 @@ generate the objects necessary to define and fit a TMLE.
 ### `tmle3_task`
 
 First is, a `tmle3_Task`, analogous to an `sl3_Task`, containing the data we're
-fitting the TMLE to, as well as an NP-SEM generated from the `node_list`
+fitting the TMLE to, as well as an NPSEM generated from the `node_list`
 defined above, describing the variables and their relationships.
 
 
@@ -275,17 +349,17 @@ estimates for each observation:
 ```r
 initial_likelihood$get_likelihoods(tmle_task)
 #>                W       A        Y
-#>    1: 0.00021299 0.24777 -0.66024
-#>    2: 0.00021299 0.25473 -0.63282
-#>    3: 0.00021299 0.25927 -0.62043
-#>    4: 0.00021299 0.28067 -0.59987
-#>    5: 0.00021299 0.25367 -0.54247
+#>    1: 0.00021299 0.35119 -0.35564
+#>    2: 0.00021299 0.36392 -0.92990
+#>    3: 0.00021299 0.34124 -0.80184
+#>    4: 0.00021299 0.34758 -0.91770
+#>    5: 0.00021299 0.34353 -0.61402
 #>   ---                            
-#> 4691: 0.00021299 0.13503 -0.46139
-#> 4692: 0.00021299 0.12616 -0.48049
-#> 4693: 0.00021299 0.12641 -0.56625
-#> 4694: 0.00021299 0.17597 -0.81872
-#> 4695: 0.00021299 0.12997 -0.53951
+#> 4691: 0.00021299 0.23773 -0.57275
+#> 4692: 0.00021299 0.22197 -0.23114
+#> 4693: 0.00021299 0.22567 -0.80089
+#> 4694: 0.00021299 0.28334 -0.89036
+#> 4695: 0.00021299 0.19391 -1.06870
 ```
 
 <!-- TODO: make helper to get learners out of fit objects -->
@@ -294,8 +368,8 @@ initial_likelihood$get_likelihoods(tmle_task)
 
 We also need to define a "Targeted Likelihood" object. This is a special type
 of likelihood that is able to be updated using an `tmle3_Update` object. This
-object defines the update strategy (e.g. submodel, loss function, CV-TMLE or
-not, etc).
+object defines the update strategy (e.g., submodel, loss function, CV-TMLE or
+not).
 
 
 ```r
@@ -342,10 +416,10 @@ tmle_fit_manual <- fit_tmle3(
 )
 print(tmle_fit_manual)
 #> A tmle3_Fit that took 1 step(s)
-#>    type                                    param  init_est   tmle_est       se
-#> 1:  ATE ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] 0.0024533 -0.0096405 0.050768
-#>       lower    upper psi_transformed lower_transformed upper_transformed
-#> 1: -0.10914 0.089864      -0.0096405          -0.10914          0.089864
+#>    type                                    param   init_est tmle_est       se
+#> 1:  ATE ATE[Y_{A=Nutrition + WSH}-Y_{A=Control}] -0.0050134 0.013088 0.050723
+#>        lower  upper psi_transformed lower_transformed upper_transformed
+#> 1: -0.086327 0.1125        0.013088         -0.086327            0.1125
 ```
 
 The result is equivalent to fitting using the `tmle3` function as above.
@@ -425,33 +499,33 @@ tmle_fit_multiparam <- fit_tmle3(
 
 print(tmle_fit_multiparam)
 #> A tmle3_Fit that took 1 step(s)
-#>    type                                       param   init_est  tmle_est
-#> 1:  TSM                            E[Y_{A=Control}] -0.5937962 -0.613477
-#> 2:  TSM                        E[Y_{A=Handwashing}] -0.6064124 -0.644888
-#> 3:  TSM                          E[Y_{A=Nutrition}] -0.6019064 -0.615316
-#> 4:  TSM                    E[Y_{A=Nutrition + WSH}] -0.5913428 -0.623089
-#> 5:  TSM                         E[Y_{A=Sanitation}] -0.5871441 -0.585550
-#> 6:  TSM                                E[Y_{A=WSH}] -0.5280048 -0.451937
-#> 7:  TSM                              E[Y_{A=Water}] -0.5754032 -0.531406
-#> 8:  ATE E[Y_{A=Nutrition + WSH}] - E[Y_{A=Control}]  0.0024533 -0.009612
-#>          se    lower     upper psi_transformed lower_transformed
-#> 1: 0.030006 -0.67229 -0.554667       -0.613477          -0.67229
-#> 2: 0.042335 -0.72786 -0.561913       -0.644888          -0.72786
-#> 3: 0.042543 -0.69870 -0.531934       -0.615316          -0.69870
-#> 4: 0.041038 -0.70352 -0.542656       -0.623089          -0.70352
-#> 5: 0.042212 -0.66828 -0.502817       -0.585550          -0.66828
-#> 6: 0.044962 -0.54006 -0.363814       -0.451937          -0.54006
-#> 7: 0.038728 -0.60731 -0.455499       -0.531406          -0.60731
-#> 8: 0.050760 -0.10910  0.089876       -0.009612          -0.10910
+#>    type                                       param   init_est tmle_est
+#> 1:  TSM                            E[Y_{A=Control}] -0.5961253 -0.62053
+#> 2:  TSM                        E[Y_{A=Handwashing}] -0.6168261 -0.65898
+#> 3:  TSM                          E[Y_{A=Nutrition}] -0.6109573 -0.60538
+#> 4:  TSM                    E[Y_{A=Nutrition + WSH}] -0.6011387 -0.60735
+#> 5:  TSM                         E[Y_{A=Sanitation}] -0.5877457 -0.58053
+#> 6:  TSM                                E[Y_{A=WSH}] -0.5195720 -0.44788
+#> 7:  TSM                              E[Y_{A=Water}] -0.5652293 -0.53685
+#> 8:  ATE E[Y_{A=Nutrition + WSH}] - E[Y_{A=Control}] -0.0050134  0.01318
+#>          se     lower    upper psi_transformed lower_transformed
+#> 1: 0.029842 -0.679020 -0.56204        -0.62053         -0.679020
+#> 2: 0.041960 -0.741218 -0.57674        -0.65898         -0.741218
+#> 3: 0.042067 -0.687834 -0.52293        -0.60538         -0.687834
+#> 4: 0.041236 -0.688173 -0.52653        -0.60735         -0.688173
+#> 5: 0.042322 -0.663485 -0.49758        -0.58053         -0.663485
+#> 6: 0.045677 -0.537408 -0.35836        -0.44788         -0.537408
+#> 7: 0.039059 -0.613405 -0.46030        -0.53685         -0.613405
+#> 8: 0.050718 -0.086226  0.11259         0.01318         -0.086226
 #>    upper_transformed
-#> 1:         -0.554667
-#> 2:         -0.561913
-#> 3:         -0.531934
-#> 4:         -0.542656
-#> 5:         -0.502817
-#> 6:         -0.363814
-#> 7:         -0.455499
-#> 8:          0.089876
+#> 1:          -0.56204
+#> 2:          -0.57674
+#> 3:          -0.52293
+#> 4:          -0.52653
+#> 5:          -0.49758
+#> 6:          -0.35836
+#> 7:          -0.46030
+#> 8:           0.11259
 ```
 
 ## Exercises
@@ -480,15 +554,13 @@ cpp <- cpp %>%
 <!--
 We're interested in using this simplified data to estimate an Average Treatment
 Effect (ATE):
-
-$$\Psi(P_0) = E_0(E_0[Y|A=1,W]-E_0[Y|A=0,W])$$
-
+$\Psi(P_0)=\mathbb{E}_0(\mathbb{E}_0[Y \mid A=1,W]-\mathbb{E}_0[Y \mid A=0,W])$
 
 The purely statistical (non-causal) parameter can be interpreted as the average
 of the difference in means across the strata for $W$, and only requires the
 positivity assumption, that the conditional treatment assignment probabilities
-are positive for each possible $w: P_0(A=1 \mid W=w) > 0$ and
-$P_0(A=0 \mid W=w) > 0$ for each possible $w$.
+are positive for each possible $w$: $\mathbb{P}_0(A=1 \mid W=w) > 0$ and
+$\mathbb{P}_0(A=0 \mid W=w) > 0$ for each possible $w$.
 
 To interpret this parameter as causal, specifically the causal risk difference
 $E_0Y_1-E_0Y_0$, then we would also need to make the randomization assumption
@@ -514,7 +586,8 @@ but also tailored to have robust finite sample performance.
    above.
 2. Define a `tmle3_Spec` object for the ATE, `tmle_ATE()`.
 3. Using the same base learning libraries defined above, specify `sl3` base
-   learners for estimation of $Q = E(Y \mid A,Y)$ and $g=P(A \mid W)$.
+   learners for estimation of $\overline{Q}_0 = \mathbb{E}_0(Y \mid A,Y)$ and
+   $g_0 = \mathbb{P}(A = 1 \mid W)$.
 4. Define the metalearner like below.
 
 
@@ -526,18 +599,19 @@ metalearner <- make_learner(
 )
 ```
 
-5. Define one super learner for estimating $Q$ and another for estimating $g$.
-   Use the metalearner above for both $Q$ and $g$ super learners.
-6. Create a list of the two super learners defined in Step 5 and call this
-   object `learner_list`. The list names should be `A` (defining the super
-   learner for estimating $g$) and `Y` (defining the super learner for
-   estimating $Q$).
-7. Fit the tmle with the `tmle3` function by specifying (1) the `tmle3_Spec`,
+5. Define one super learner for estimating $\overline{Q}_0$ and another for
+   estimating $g_0$. Use the metalearner above for both super learners.
+6. Create a list of the two super learners defined in the step above and call
+   this object `learner_list`. The list names should be `A` (defining the super
+   learner for estimation of $g_0$) and `Y` (defining the super learner for
+   estimation of $\overline{Q}_0$).
+7. Fit the TMLE with the `tmle3` function by specifying (1) the `tmle3_Spec`,
    which we defined in Step 2; (2) the data; (3) the list of nodes, which we
-   specified in Step 1; and (4) the list of super learners for estimating $g$
-   and $Q$, which we defined in Step 6. *Note*: Like before, you will need to
-   make a data copy to deal with `data.table` weirdness
-   (`cpp2 <- data.table::copy(cpp)`) and use `cpp2` as the data.
+   specified in Step 1; and (4) the list of super learners for estimation of
+   $g_0$ and $\overline{Q}_0$, which we defined in Step 6. *Note*: Like before,
+   you will need to explicitly make a copy of the data (to work around
+   `data.table` optimizations), e.g., (`cpp2 <- data.table::copy(cpp)`), then
+   use the `cpp2` data going forward.
 
 ### Estimation of Strata-Specific ATEs with `tmle3` {#tmle3-ex2}
 
@@ -564,10 +638,10 @@ covariates was created.
    recurrent ischemic stroke. Even though the missingness mechanism on $Y$,
    $\Delta$, does not need to be specified in the node list, it does still need
    to be accounted for in the TMLE. In other words, for this estimation problem,
-   $\Delta$ is a relevant factor of the likelihood in addition to $Q$, $g$.
-   Thus, when defining the list of `sl3` learners for each likelihood factor, be
-   sure to include a list of learners for estimation of $\Delta$, say
-   `sl_Delta`, and specify something like
+   $\Delta$ is a relevant factor of the likelihood.  Thus, when defining the
+   list of `sl3` learners for each likelihood factor, be sure to include a list
+   of learners for estimation of $\Delta$, say `sl_Delta`, and specify this in
+   the learner list, like so
    `learner_list <- list(A = sl_A, delta_Y = sl_Delta, Y = sl_Y)`.
 2. Recall that this RCT was conducted internationally. Suposse there is concern
    that the dose of asprin may have varied across geographical regions, and an
@@ -586,9 +660,9 @@ ist_data <- fread(
 
 ## Summary
 
-`tmle3` is a general purpose framework for generating TML estimates. The
-easiest way to use it is to use a predefined spec, allowing you to just fill in
-the blanks for the data, variable roles, and `sl3` learners. However, digging
-under the hood allows users to specify a wide range of TMLEs. In the next
-sections, we'll see how this framework can be used to estimate advanced
-parameters such as optimal treatments and shift interventions.
+`tmle3` is a general purpose framework for generating TML estimates. The easiest
+way to use it is to use a predefined spec, allowing you to just fill in the
+blanks for the data, variable roles, and `sl3` learners. However, digging under
+the hood allows users to specify a wide range of TMLEs. In the next sections,
+we'll see how this framework can be used to estimate advanced parameters such as
+optimal treatments and stochastic shift interventions.

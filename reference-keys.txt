@@ -34,11 +34,12 @@ concluding-remarks
 sl3ex1-sol
 sl3ex2-sol
 tmle3
-learning-objectives-3
-introduction-2
-substitution-estimators
+learn-tmle
+tmle-intro
+substitution-est
 tmle
-inference
+tmle-updates
+tmle-infer
 easy-bake-example-tmle3-for-ate
 load-the-data
 define-the-variable-roles
@@ -61,7 +62,7 @@ tmle3-ex1
 tmle3-ex2
 summary
 optimal-individualized-treatment-regimes-optional
-learning-objectives-4
+learning-objectives-3
 introduction-to-optimal-individualized-interventions
 data-structure-and-notation
 defining-the-causal-effect-of-an-optimal-individualized-intervention
@@ -86,8 +87,8 @@ real-world-data-and-tmle3mopttx
 summary-1
 solutions
 stochastic-treatment-regimes-optional
-learning-objectives-5
-introduction-3
+learning-objectives-4
+introduction-2
 stochastic-interventions
 identifying-the-causal-effect-of-a-stochastic-intervention
 interpreting-the-causal-effect-of-a-stochastic-intervention
