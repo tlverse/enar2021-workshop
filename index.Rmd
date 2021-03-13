@@ -85,7 +85,12 @@ necessary.  Familiarity with the `R` programming language will be essential.
 
 * 08:00-08:50A: The Roadmap of Targeted Learning and [Why We Need A Statistical
   Revolution](https://senseaboutscienceusa.org/super-learning-and-the-revolution-in-knowledge/)
-* 08:50-09:20A: Discussion
+  with introductory video lectures:
+    1. [Targeted Learning: Causal Inference Meets Machine Learning with Mark
+       van der Laan](https://www.dropbox.com/s/mxpwplbspqxjos6/ENAR2021.mp4?dl=0)
+    2. [Targeted Learning Case Studies and Software Framework Overview with
+       Alan Hubbard](https://www.dropbox.com/scl/fi/0ylrwuf8souwg3gzj4izx/zoom_0.mp4?dl=0)
+* 08:50-09:20A: Morning Discussion
 * 09:20-10:00A: Morning Coffee Break + Introductions
 * 10:00-10:30A: [Introduction to the `tlverse` Software
   Ecosystem](https://tlverse.org) and the [WASH Benefits
