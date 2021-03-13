@@ -99,7 +99,7 @@ lrn_interaction <- make_learner(Lrnr_define_interactions, interactions)
 
 
 ## ----interaction-pipe---------------------------------------------------------
-# we already instantiated a linear model learner above, no need to do that again
+# we already instantiated a linear model learner, no need to do that again
 lrn_glm_interaction <- make_learner(Pipeline, lrn_interaction, lrn_glm)
 lrn_glm_interaction
 
@@ -283,7 +283,7 @@ washb_varimp %>%
   scroll_box(width = "100%", height = "300px")
 
 
-## ----varimp-plot--------------------------------------------------------------
+## ----varimp-plot, out.width = "120%"------------------------------------------
 # plot variable importance
 importance_plot(
   washb_varimp,
