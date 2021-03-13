@@ -499,7 +499,7 @@ For this, we augment our initialized `tmle3_Spec` object like so
 
 ```{r shift_spec_emm_washb}
 # initialize effect modification specification around previous specification
-washb_shift_strat_spec <-  tmle_stratified(washb_shift_spec, "momedu")
+washb_shift_strat_spec <-  tmle_stratified(washb_shift_spec)
 ```
 
 Prior to running our analysis, we'll modify the `learner_list` object we had
@@ -526,6 +526,8 @@ $\delta = 2$, stratified across levels of our variable of interest:
 
 ```{r fit_shift_emm_washb}
 # fit stratified TMLE
+strat_node_list <- copy(node_list)
+strat_node_list$V <- "momedu"
 washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, node_list,
                                learner_list)
 washb_shift_strat_fit
