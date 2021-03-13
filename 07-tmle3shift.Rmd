@@ -528,7 +528,7 @@ $\delta = 2$, stratified across levels of our variable of interest:
 # fit stratified TMLE
 strat_node_list <- copy(node_list)
 strat_node_list$V <- "momedu"
-washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, node_list,
+washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, strat_node_list,
                                learner_list)
 washb_shift_strat_fit
 ```
