@@ -24,9 +24,9 @@ Imports:
   delayed,
   origami (>= 1.0.3),
   sl3 (>= 1.4.3),
-  tmle3,
+  tmle3 (>= 0.2.0),
   tmle3mopttx,
-  tmle3shift
+  tmle3shift (>= 0.2.0)
 Suggests:
   nnls,
   Rsolnp,
