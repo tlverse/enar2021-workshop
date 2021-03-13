@@ -5,7 +5,7 @@ _Nima Hejazi_
 Based on the [`tmle3shift` `R` package](https://github.com/tlverse/tmle3shift)
 by _Nima Hejazi, Jeremy Coyle, and Mark van der Laan_.
 
-Updated: 2021-03-12
+Updated: 2021-03-13
 
 ## Learning Objectives
 
@@ -584,7 +584,7 @@ For this, we augment our initialized `tmle3_Spec` object like so
 
 ```r
 # initialize effect modification specification around previous specification
-washb_shift_strat_spec <-  tmle_stratified(washb_shift_spec, "momedu")
+washb_shift_strat_spec <-  tmle_stratified(washb_shift_spec)
 ```
 
 Prior to running our analysis, we'll modify the `learner_list` object we had
@@ -613,20 +613,23 @@ $\delta = 2$, stratified across levels of our variable of interest:
 
 ```r
 # fit stratified TMLE
-washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, node_list,
+strat_node_list <- copy(node_list)
+strat_node_list$W <- setdiff(strat_node_list$W,"momedu")
+strat_node_list$V <- "momedu"
+washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, strat_node_list,
                                learner_list)
 washb_shift_strat_fit
 #> A tmle3_Fit that took 1 step(s)
 #>              type                             param init_est tmle_est       se
-#> 1:            TSM                     E[Y_{A=NULL}] -0.57207 -0.56941 0.048206
-#> 2: stratified TSM  E[Y_{A=NULL}] | V=Primary (1-5y) -0.62300 -0.69199 0.076811
-#> 3: stratified TSM    E[Y_{A=NULL}] | V=No education -0.68685 -0.86672 0.128939
-#> 4: stratified TSM E[Y_{A=NULL}] | V=Secondary (>5y) -0.50711 -0.40696 0.067622
+#> 1:            TSM                     E[Y_{A=NULL}] -0.57206 -0.56936 0.048211
+#> 2: stratified TSM  E[Y_{A=NULL}] | V=Primary (1-5y) -0.62295 -0.69200 0.076813
+#> 3: stratified TSM    E[Y_{A=NULL}] | V=No education -0.68673 -0.86672 0.128939
+#> 4: stratified TSM E[Y_{A=NULL}] | V=Secondary (>5y) -0.50717 -0.40686 0.067633
 #>       lower    upper psi_transformed lower_transformed upper_transformed
-#> 1: -0.66389 -0.47493        -0.56941          -0.66389          -0.47493
-#> 2: -0.84254 -0.54145        -0.69199          -0.84254          -0.54145
+#> 1: -0.66385 -0.47487        -0.56936          -0.66385          -0.47487
+#> 2: -0.84255 -0.54145        -0.69200          -0.84255          -0.54145
 #> 3: -1.11944 -0.61401        -0.86672          -1.11944          -0.61401
-#> 4: -0.53950 -0.27443        -0.40696          -0.53950          -0.27443
+#> 4: -0.53942 -0.27431        -0.40686          -0.53942          -0.27431
 ```
 
 For the next example, we'll use the variable importance strategy of considering

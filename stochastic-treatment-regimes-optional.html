@@ -58,7 +58,7 @@
 <p><em>Nima Hejazi</em></p>
 <p>Based on the <a href="https://github.com/tlverse/tmle3shift"><code>tmle3shift</code> <code>R</code> package</a>
 by <em>Nima Hejazi, Jeremy Coyle, and Mark van der Laan</em>.</p>
-<p>Updated: 2021-03-12</p>
+<p>Updated: 2021-03-13</p>
 <div id="learning-objectives-4" class="section level2">
 <h2>
 <span class="header-section-number">6.1</span> Learning Objectives<a class="anchor" aria-label="anchor" href="#learning-objectives-4"><i class="fas fa-link"></i></a>
@@ -613,7 +613,7 @@ mother’s education level (<code>momedu</code>, a categorical variable with thr
 For this, we augment our initialized <code>tmle3_Spec</code> object like so</p>
 <div class="sourceCode" id="cb102"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># initialize effect modification specification around previous specification</span>
-<span class="va">washb_shift_strat_spec</span> <span class="op">&lt;-</span>  <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle_stratified.html">tmle_stratified</a></span><span class="op">(</span><span class="va">washb_shift_spec</span>, <span class="st">"momedu"</span><span class="op">)</span></code></pre></div>
+<span class="va">washb_shift_strat_spec</span> <span class="op">&lt;-</span>  <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle_stratified.html">tmle_stratified</a></span><span class="op">(</span><span class="va">washb_shift_spec</span><span class="op">)</span></code></pre></div>
 <p>Prior to running our analysis, we’ll modify the <code>learner_list</code> object we had
 created to include just one of the semiparametric location-scale conditional
 density estimators, as fitting of these estimators is much faster than the more
@@ -634,20 +634,23 @@ computationally intensive approach implemented in the
 <span class="math inline">\(\delta = 2\)</span>, stratified across levels of our variable of interest:</p>
 <div class="sourceCode" id="cb104"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># fit stratified TMLE</span>
-<span class="va">washb_shift_strat_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle3.html">tmle3</a></span><span class="op">(</span><span class="va">washb_shift_strat_spec</span>, <span class="va">washb_data</span>, <span class="va">node_list</span>,
+<span class="va">strat_node_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/copy.html">copy</a></span><span class="op">(</span><span class="va">node_list</span><span class="op">)</span>
+<span class="va">strat_node_list</span><span class="op">$</span><span class="va">W</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/setops.html">setdiff</a></span><span class="op">(</span><span class="va">strat_node_list</span><span class="op">$</span><span class="va">W</span>,<span class="st">"momedu"</span><span class="op">)</span>
+<span class="va">strat_node_list</span><span class="op">$</span><span class="va">V</span> <span class="op">&lt;-</span> <span class="st">"momedu"</span>
+<span class="va">washb_shift_strat_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://tlverse.org/tmle3/reference/tmle3.html">tmle3</a></span><span class="op">(</span><span class="va">washb_shift_strat_spec</span>, <span class="va">washb_data</span>, <span class="va">strat_node_list</span>,
                                <span class="va">learner_list</span><span class="op">)</span>
 <span class="va">washb_shift_strat_fit</span>
 <span class="co">#&gt; A tmle3_Fit that took 1 step(s)</span>
 <span class="co">#&gt;              type                             param init_est tmle_est       se</span>
-<span class="co">#&gt; 1:            TSM                     E[Y_{A=NULL}] -0.57207 -0.56941 0.048206</span>
-<span class="co">#&gt; 2: stratified TSM  E[Y_{A=NULL}] | V=Primary (1-5y) -0.62300 -0.69199 0.076811</span>
-<span class="co">#&gt; 3: stratified TSM    E[Y_{A=NULL}] | V=No education -0.68685 -0.86672 0.128939</span>
-<span class="co">#&gt; 4: stratified TSM E[Y_{A=NULL}] | V=Secondary (&gt;5y) -0.50711 -0.40696 0.067622</span>
+<span class="co">#&gt; 1:            TSM                     E[Y_{A=NULL}] -0.57206 -0.56936 0.048211</span>
+<span class="co">#&gt; 2: stratified TSM  E[Y_{A=NULL}] | V=Primary (1-5y) -0.62295 -0.69200 0.076813</span>
+<span class="co">#&gt; 3: stratified TSM    E[Y_{A=NULL}] | V=No education -0.68673 -0.86672 0.128939</span>
+<span class="co">#&gt; 4: stratified TSM E[Y_{A=NULL}] | V=Secondary (&gt;5y) -0.50717 -0.40686 0.067633</span>
 <span class="co">#&gt;       lower    upper psi_transformed lower_transformed upper_transformed</span>
-<span class="co">#&gt; 1: -0.66389 -0.47493        -0.56941          -0.66389          -0.47493</span>
-<span class="co">#&gt; 2: -0.84254 -0.54145        -0.69199          -0.84254          -0.54145</span>
+<span class="co">#&gt; 1: -0.66385 -0.47487        -0.56936          -0.66385          -0.47487</span>
+<span class="co">#&gt; 2: -0.84255 -0.54145        -0.69200          -0.84255          -0.54145</span>
 <span class="co">#&gt; 3: -1.11944 -0.61401        -0.86672          -1.11944          -0.61401</span>
-<span class="co">#&gt; 4: -0.53950 -0.27443        -0.40696          -0.53950          -0.27443</span></code></pre></div>
+<span class="co">#&gt; 4: -0.53942 -0.27431        -0.40686          -0.53942          -0.27431</span></code></pre></div>
 <p>For the next example, we’ll use the variable importance strategy of considering
 a grid of stochastic interventions to evaluate the weight-for-height Z-score
 under a shift in the mother’s age down by two years (<span class="math inline">\(\delta = -2\)</span>) through up
@@ -761,7 +764,7 @@ interpret our findings?</p></li>
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>[ENAR 2021 Workshop] Targeted Learning in the <code>tlverse</code></strong>: Causal Inference Meets Machine Learning" was written by Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana Malenica, Rachael Phillips. It was last built on updated: March 12, 2021.</p>
+    <p>"<strong>[ENAR 2021 Workshop] Targeted Learning in the <code>tlverse</code></strong>: Causal Inference Meets Machine Learning" was written by Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana Malenica, Rachael Phillips. It was last built on updated: March 13, 2021.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

@@ -4,7 +4,7 @@ title: "[ENAR 2021 Workshop] Targeted Learning in the `tlverse`"
 subtitle: "Causal Inference Meets Machine Learning"
 author: "Mark van der Laan, Alan Hubbard, Jeremy Coyle, Nima Hejazi, Ivana
   Malenica, Rachael Phillips"
-date: "updated: March 12, 2021"
+date: "updated: March 13, 2021"
 documentclass: book
 site: bookdown::bookdown_site
 bibliography: [book.bib, packages.bib]
@@ -218,7 +218,7 @@ following packages:
 |tibble      |3.1.0      |CRAN (R 4.0.4)                        |
 |tidyr       |1.1.3      |CRAN (R 4.0.4)                        |
 |tidyverse   |1.3.0      |CRAN (R 4.0.4)                        |
-|tmle3       |0.1.7      |Github (tlverse/tmle3\@5d86bd4)       |
+|tmle3       |0.2.0      |Github (tlverse/tmle3\@7652066)       |
 |tmle3mopttx |0.1.0      |Github (tlverse/tmle3mopttx\@5ba5f65) |
 |tmle3shift  |0.1.9      |Github (tlverse/tmle3shift\@daa0f96)  |
 
