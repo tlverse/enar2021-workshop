@@ -283,7 +283,7 @@ washb_varimp %>%
   scroll_box(width = "100%", height = "300px")
 
 
-## ----varimp-plot, out.width = "120%"------------------------------------------
+## ----varimp-plot, out.width = "100%"------------------------------------------
 # plot variable importance
 importance_plot(
   washb_varimp,
