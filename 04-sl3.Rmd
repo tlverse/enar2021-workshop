@@ -92,7 +92,6 @@ samples [@polley2010super]. The SL is proven to perform asymptotically as well
 as the best possible prediction algorithm in the library [@vdl2003unified;
 @vaart2006oracle].
 
-<<<<<<< HEAD
 ### Why use the Super Learner? {-}
 
 - For prediction, one can use the cross-validated risk to empirically determine
