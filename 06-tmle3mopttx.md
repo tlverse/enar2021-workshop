@@ -5,7 +5,7 @@ _Ivana Malenica_
 Based on the [`tmle3mopttx` `R` package](https://github.com/tlverse/tmle3mopttx)
 by _Ivana Malenica, Jeremy Coyle, and Mark van der Laan_.
 
-Updated: 2021-03-13
+Updated: 2021-03-14
 
 ## Learning Objectives
 By the end of this lesson you will be able to:
@@ -64,6 +64,7 @@ visits, and peer health workers.
 * Ideally, we want to improve effectiveness by assigning
 each patient the intervention they are most likely to benefit from, as well as improve
 efficiency by not allocating resources to individuals that do not need them, or would
+not benefit from an intervention.
 
 <div class="figure" style="text-align: center">
 <img src="img/image/DynamicA_Illustration.png" alt="Illustration of a Dynamic Treatment Regime in a Clinical Setting" width="60%" />
@@ -115,13 +116,13 @@ corresponding conditional distributions of $Y$, $A$ and $W$.
 
 * We also define $\bar{Q}_{Y,0}(A,W) \equiv E_0[Y|A,W]$.
 
-* Finally, denote $V$ as $V \in W$, defining a subset of the baseline covariates
+* Finally, denote $V$ as a subset of the baseline covariates $W$ that
 the optimal individualized rule depends on.
 
 ## Defining the Causal Effect of an Optimal Individualized Intervention
 
 * Consider dynamic treatment rules $V \rightarrow d(V) \in \{a_1, \ldots, a_{n_A} \} \times \{1\}$,
-for assigning treatment $A$ based on $V \in W$.
+for assigning treatment $A$ based on $V$.
 
 * Dynamic treatment regime may be viewed as an intervention in which
 $A$ is set equal to a value based on a hypothetical regime $d(V)$, and $Y_{d(V)}$
@@ -243,7 +244,7 @@ data("data_bin")
 
 * The above composes our observed data structure $O = (W, A, Y)$.
 
-* Note that the mean under the true optimal rule is $\psi=0.578$ for this data generating
+* Note that the mean under the true optimal rule is $\psi_0=0.578$ for this data generating
 distribution.
 
 * Next, we specify the role that each variable in the data set plays as the nodes in a DAG.
@@ -413,7 +414,7 @@ data("data_cat_realistic")
 ```
 
 * The above composes our observed data structure $O = (W, A, Y)$. Note that the
-mean under the true optimal rule is $\psi=0.658$, which is the quantity we aim
+mean under the true optimal rule is $\psi_0=0.658$, which is the quantity we aim
 to estimate.
 
 
@@ -579,8 +580,7 @@ Even though the user specified all baseline covariates as the basis
 for rule estimation, a simpler rule is sufficient to
 maximize the mean under the optimal individualized treatment!
 
-**QUESTION:** Why do you think the estimate
-   is higher under the less complex rule? How does the set of covariates picked by `tmle3mopttx`
+**QUESTION:** How does the set of covariates picked by `tmle3mopttx`
    compare to the baseline covariates the true rule depends on?
 
 ### Realistic Optimal Individual Regimes
