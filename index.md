@@ -85,7 +85,12 @@ necessary.  Familiarity with the `R` programming language will be essential.
 
 * 08:00-08:50A: The Roadmap of Targeted Learning and [Why We Need A Statistical
   Revolution](https://senseaboutscienceusa.org/super-learning-and-the-revolution-in-knowledge/)
-* 08:50-09:20A: Discussion
+  with introductory video lectures:
+    1. [Targeted Learning: Causal Inference Meets Machine Learning with Mark
+       van der Laan](https://www.dropbox.com/s/mxpwplbspqxjos6/ENAR2021.mp4?dl=0)
+    2. [Targeted Learning Case Studies and Software Framework Overview with
+       Alan Hubbard](https://www.dropbox.com/scl/fi/0ylrwuf8souwg3gzj4izx/zoom_0.mp4?dl=0)
+* 08:50-09:20A: Morning Discussion
 * 09:20-10:00A: Morning Coffee Break + Introductions
 * 10:00-10:30A: [Introduction to the `tlverse` Software
   Ecosystem](https://tlverse.org) and the [WASH Benefits
@@ -218,9 +223,9 @@ following packages:
 |tibble      |3.1.0      |CRAN (R 4.0.4)                        |
 |tidyr       |1.1.3      |CRAN (R 4.0.4)                        |
 |tidyverse   |1.3.0      |CRAN (R 4.0.4)                        |
-|tmle3       |0.2.0      |Github (tlverse/tmle3\@7652066)       |
+|tmle3       |0.2.0      |Github (tlverse/tmle3\@425e21c)       |
 |tmle3mopttx |0.1.0      |Github (tlverse/tmle3mopttx\@5ba5f65) |
-|tmle3shift  |0.1.9      |Github (tlverse/tmle3shift\@daa0f96)  |
+|tmle3shift  |0.2.0      |Github (tlverse/tmle3shift\@43f6fc0)  |
 
 ## Setup instructions {#setup}
 
