@@ -114,8 +114,6 @@ knitr::include_graphics("img/misc/ericSL.pdf")
 - Motivates the name "Super Learner": it provides a system of combining many 
   estimators into an improved estimator.
   
-=======
->>>>>>> 999fee88455c42e6385ff8bb70bca50c53b72ae9
 ### General Overview of the Algorithm {-}
 
 #### What is cross-validation and how does it work?
