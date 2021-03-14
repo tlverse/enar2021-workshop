@@ -102,7 +102,7 @@ as the best possible prediction algorithm in the library [@vdl2003unified;
 - Below shows the results of such a study, comparing the fits of several 
   different learners, including the SL algorithms.
 
-```{r cv_fig3, fig.show="hold", echo = FALSE}
+```{r why_sl, fig.show="hold", echo = FALSE}
 knitr::include_graphics("img/misc/ericSL.pdf")
 ```
 
@@ -156,7 +156,7 @@ knitr::include_graphics("img/misc/vs.pdf")
 Note, this entire procedure can be itself cross-validated to get a consistent
 estimate of the future performance of the SL fit.
 
-```{r cv_fig2, fig.show="hold", echo = FALSE}
+```{r cv_sl_alg, fig.show="hold", echo = FALSE}
 knitr::include_graphics("img/misc/SLKaiserNew.pdf")
 ```
 
@@ -167,35 +167,8 @@ knitr::include_graphics("img/misc/SLKaiserNew.pdf")
   large set of "default" algorithms.
 - The algorithms may range from a simple linear regression model to multi-step
   algorithms involving screening covariates, penalizations, optimizing tuning
-<<<<<<< HEAD
   parameters, etc. 
-    
-=======
-  parameters, etc.
 
-### Why use the Super Learner? {-}
-
-- For prediction, one can use the cross-validated risk to empirically determine
-  the relative performance of SL and competing methods.
-- When we have tested different algorithms on actual
-  data and looked at the performance (e.g., MSE of prediction), never does one
-  algorithm always win (see below).
-- Below shows the results of such a study, comparing the fits of several
-  different learners, including the SL algorithms.
-
-```{r cv_fig3, fig.show="hold", echo = FALSE}
-knitr::include_graphics("img/misc/ericSL.pdf")
-```
-
-- SL performs asymptotically as well as the best possible weighted combination.
-- By including all competitors in the library of candidate estimators (GLMs,
-  neural nets, SVMs, random forest, etc), the SL will asymptotically
-  outperform any of its competitors --- even if the set of competitors is
-  allowed to grow polynomial in sample size.
-- Motivates the name "Super Learner": it provides a system of combining many
-  estimators into an improved estimator.
-
->>>>>>> 999fee88455c42e6385ff8bb70bca50c53b72ae9
 ### Summary of Super Learner's Foundations {-}
 
 - We use a *loss function* $L$ to assign a measure of performance to each
