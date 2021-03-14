@@ -88,6 +88,28 @@ the `sl3` nomenclature) has been shown to be adaptive and robust, even in small
 samples [@polley2010super]. The SL is proven to perform asymptotically as good
 as the best possible prediction algorithm in the library [@vdl2003unified; 
 @vaart2006oracle].
+
+### Why use the Super Learner? {-}
+
+- For prediction, one can use the cross-validated risk to empirically determine
+  the relative performance of SL and competing methods. 
+- When we have tested different algorithms on actual
+  data and looked at the performance (e.g., MSE of prediction), never does one
+  algorithm always win (see below).
+- Below shows the results of such a study, comparing the fits of several 
+  different learners, including the SL algorithms.
+
+```{r cv_fig3, fig.show="hold", echo = FALSE}
+knitr::include_graphics("img/misc/ericSL.pdf")
+```
+
+- SL performs asymptotically as well as the best possible weighted combination. 
+- By including all competitors in the library of candidate estimators (glm, 
+  neural nets, SVMs, random forest, etc.), the SL will asymptotically 
+  outperform any of its competitors --- even if the set of competitors is 
+  allowed to grow polynomial in sample size. 
+- Motivates the name "Super Learner": it provides a system of combining many 
+  estimators into an improved estimator.
   
 ### General Overview of the Algorithm {-}
 
@@ -145,28 +167,6 @@ knitr::include_graphics("img/misc/SLKaiserNew.pdf")
   algorithms involving screening covariates, penalizations, optimizing tuning
   parameters, etc. 
     
-### Why use the Super Learner? {-}
-
-- For prediction, one can use the cross-validated risk to empirically determine
-  the relative performance of SL and competing methods. 
-- When we have tested different algorithms on actual
-  data and looked at the performance (e.g., MSE of prediction), never does one
-  algorithm always win (see below).
-- Below shows the results of such a study, comparing the fits of several 
-  different learners, including the SL algorithms.
-
-```{r cv_fig3, fig.show="hold", echo = FALSE}
-knitr::include_graphics("img/misc/ericSL.pdf")
-```
-
-- SL performs asymptotically as well as the best possible weighted combination. 
-- By including all competitors in the library of candidate estimators (glm, 
-  neural nets, SVMs, random forest, etc.), the SL will asymptotically 
-  outperform any of its competitors --- even if the set of competitors is 
-  allowed to grow polynomial in sample size. 
-- Motivates the name "Super Learner": it provides a system of combining many 
-  estimators into an improved estimator.
-
 ### Summary of Super Learner's Foundations {-}
 
 - We use a *loss function* $L$ to assign a measure of performance to each 
