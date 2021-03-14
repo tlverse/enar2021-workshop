@@ -146,7 +146,7 @@ washb_shift_spec <- tmle_shift(
 
 ## ----shift_spec_emm_washb-----------------------------------------------------
 # initialize effect modification specification around previous specification
-washb_shift_strat_spec <-  tmle_stratified(washb_shift_spec, "momedu")
+washb_shift_strat_spec <-  tmle_stratified(washb_shift_spec)
 
 
 ## ----sl3_lrnrs-gfit-shift-washb-----------------------------------------------
@@ -163,7 +163,10 @@ learner_list <- list(Y = Q_learner, A = hose_learner_xgb_cv)
 
 ## ----fit_shift_emm_washb------------------------------------------------------
 # fit stratified TMLE
-washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, node_list,
+strat_node_list <- copy(node_list)
+strat_node_list$W <- setdiff(strat_node_list$W,"momedu")
+strat_node_list$V <- "momedu"
+washb_shift_strat_fit <- tmle3(washb_shift_strat_spec, washb_data, strat_node_list,
                                learner_list)
 washb_shift_strat_fit
 

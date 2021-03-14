@@ -1,12 +1,27 @@
-## ----cv_fig4, echo = FALSE----------------------------------------------------
-knitr::include_graphics("img/misc/TMLEimage.pdf")
+## ----tmle_fig1, results="asis", echo = FALSE----------------------------------
+knitr::include_graphics("img/misc/tmle_sim/schematic_1_truedgd.png")
+
+
+## ----tmle_fig2, results="asis", echo = FALSE----------------------------------
+knitr::include_graphics("img/misc/tmle_sim/schematic_2b_sllik.png")
+
+
+## ----tmle_fig3, results="asis", echo = FALSE----------------------------------
+knitr::include_graphics("img/misc/tmle_sim/schematic_3_effects.png")
 
 
 ## ----tmle3-load-data----------------------------------------------------------
 library(data.table)
+library(dplyr)
 library(tmle3)
 library(sl3)
-washb_data <- fread("https://raw.githubusercontent.com/tlverse/tlverse-data/master/wash-benefits/washb_data.csv", stringsAsFactors = TRUE)
+washb_data <- fread(
+  paste0(
+    "https://raw.githubusercontent.com/tlverse/tlverse-data/master/",
+    "wash-benefits/washb_data.csv"
+  ),
+  stringsAsFactors = TRUE
+)
 
 
 ## ----tmle3-node-list----------------------------------------------------------
@@ -41,7 +56,7 @@ ate_spec <- tmle_ATE(
 ## ----tmle3-learner-list-------------------------------------------------------
 # choose base learners
 lrnr_mean <- make_learner(Lrnr_mean)
-lrnr_xgboost <- make_learner(Lrnr_xgboost)
+lrnr_rf <- make_learner(Lrnr_ranger)
 
 # define metalearners appropriate to data types
 ls_metalearner <- make_learner(Lrnr_nnls)
@@ -50,24 +65,22 @@ mn_metalearner <- make_learner(
   loss_loglik_multinomial
 )
 sl_Y <- Lrnr_sl$new(
-  learners = list(lrnr_mean, lrnr_xgboost),
+  learners = list(lrnr_mean, lrnr_rf),
   metalearner = ls_metalearner
 )
 sl_A <- Lrnr_sl$new(
-  learners = list(lrnr_mean, lrnr_xgboost),
+  learners = list(lrnr_mean, lrnr_rf),
   metalearner = mn_metalearner
 )
-
 learner_list <- list(A = sl_A, Y = sl_Y)
 
 
 ## ----tmle3-spec-fit-----------------------------------------------------------
 tmle_fit <- tmle3(ate_spec, washb_data, node_list, learner_list)
+print(tmle_fit)
 
 
 ## ----tmle3-spec-summary-------------------------------------------------------
-print(tmle_fit)
-
 estimates <- tmle_fit$summary$psi_transformed
 print(estimates)
 
@@ -143,24 +156,31 @@ tmle_fit_multiparam <- fit_tmle3(
 print(tmle_fit_multiparam)
 
 
-## ----stratified_ate-----------------------------------------------------------
-stratified_ate_spec <- tmle_stratified(ate_spec, "sex")
-stratified_fit <- tmle3(stratified_ate_spec, washb_data, node_list, learner_list)
-print(stratified_fit)
-
-
-## ----tmle-exercise-data, message=FALSE, warning=FALSE-------------------------
+## ----tmle-exercise-data-------------------------------------------------------
 # load the data set
 data(cpp)
-cpp <- cpp[!is.na(cpp[, "haz"]), ]
-cpp$parity01 <- as.numeric(cpp$parity > 0)
-cpp[is.na(cpp)] <- 0
-cpp$haz01 <- as.numeric(cpp$haz > 0)
+cpp <- cpp %>%
+  as_tibble() %>%
+  dplyr::filter(!is.na(haz)) %>%
+  mutate(
+    parity01 = as.numeric(parity > 0),
+    haz01 = as.numeric(haz > 0)
+  )
 
 
 ## ---- metalrnr-exercise-------------------------------------------------------
-metalearner <- make_learner(Lrnr_solnp,
+metalearner <- make_learner(
+  Lrnr_solnp,
   loss_function = loss_loglik_binomial,
   learner_function = metalearner_logistic_binomial
+)
+
+
+## ----tmle3-ex2----------------------------------------------------------------
+ist_data <- fread(
+  paste0(
+    "https://raw.githubusercontent.com/tlverse/deming2019-workshop/",
+    "master/data/ist_sample.csv"
+  )
 )
 
