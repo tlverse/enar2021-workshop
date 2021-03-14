@@ -1,13 +1,13 @@
+## ----why_sl, fig.show="hold", echo = FALSE------------------------------------
+knitr::include_graphics("img/misc/ericSL.pdf")
+
+
 ## ----cv_fig, fig.show="hold", echo = FALSE------------------------------------
 knitr::include_graphics("img/misc/vs.pdf")
 
 
-## ----cv_fig2, fig.show="hold", echo = FALSE-----------------------------------
+## ----cv_sl_alg, fig.show="hold", echo = FALSE---------------------------------
 knitr::include_graphics("img/misc/SLKaiserNew.pdf")
-
-
-## ----cv_fig3, fig.show="hold", echo = FALSE-----------------------------------
-knitr::include_graphics("img/misc/ericSL.pdf")
 
 
 ## ----setup--------------------------------------------------------------------

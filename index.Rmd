@@ -83,32 +83,31 @@ necessary.  Familiarity with the `R` programming language will be essential.
 
 ## Outline {-}
 
-* 08:00-08:50A: The Roadmap of Targeted Learning and [Why We Need A Statistical
+* 08:00-09:00A: The Roadmap of Targeted Learning and [Why We Need A Statistical
   Revolution](https://senseaboutscienceusa.org/super-learning-and-the-revolution-in-knowledge/)
-  with introductory video lectures:
-    1. [Targeted Learning: Causal Inference Meets Machine Learning with Mark
-       van der Laan](https://www.dropbox.com/s/mxpwplbspqxjos6/ENAR2021.mp4?dl=0)
-    2. [Targeted Learning Case Studies and Software Framework Overview with
-       Alan Hubbard](https://www.dropbox.com/scl/fi/0ylrwuf8souwg3gzj4izx/zoom_0.mp4?dl=0)
-* 08:50-09:20A: Morning Discussion
-* 09:20-10:00A: Morning Coffee Break + Introductions
+  with an *[introductory video lecture by Mark van der Laan and Alan
+  Hubbard](https://www.dropbox.com/s/7b6ru2ahycqq80v/ENAR2021-lecture.mp4?dl=0)*
+* 09:00-09:30A: Morning Discussion
+* 09:30-10:00A: Morning Coffee Break + Introductions
 * 10:00-10:30A: [Introduction to the `tlverse` Software
   Ecosystem](https://tlverse.org) and the [WASH Benefits
   data](http://www.washbenefits.net/)
 * 10:30-11:30A: Super learning with the [`sl3` `R`
   package](https://github.com/tlverse/sl3)
-* 11:30A-12:30P: Exercises with `sl3`
-* 12:30-01:30P: Lunch Break with (optional) Q&A
+* 11:30A-12:30P: Programming exercises with `sl3`
+* 12:30-01:30P: Lunch Break with optional Q&A
 * 01:30-02:30P: Targeted Learning for causal inference with the [`tmle3` `R`
   package](https://github.com/tlverse/tmle3)
-* 02:30-03:30P: Exercises with `tmle3`
+* 02:30-03:30P: Programming exercises with `tmle3`
 * 03:30-03:45P: Afternoon Coffee Break
-* 03:45-05:00P: Optimal treatment regimes with the [`tmle3mopttx` `R`
-  package](https://github.com/tlverse/tmle3mopttx), stochastic treatment
-  regimes with the [`tmle3shift` `R`
-  package](https://github.com/tlverse/tmle3shift), or concluding discussion
+* 03:45-05:00P: Participants' choice (by class vote), from among
+  * Optimal treatment regimes with the [`tmle3mopttx` `R`
+    package](https://github.com/tlverse/tmle3mopttx)
+  * Stochastic treatment regimes with the [`tmle3shift` `R`
+    package](https://github.com/tlverse/tmle3shift)
+  * Concluding review and discussion
 
-__NOTE: All times are in Eastern Time.__
+__NOTE: All listings are in Eastern Time.__
 
 ## About the instructors {-}
 
