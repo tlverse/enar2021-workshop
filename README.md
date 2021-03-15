@@ -18,5 +18,5 @@ RStudio, with libraries pinned to a specific snapshot on
 session, pre-loaded with all the materials, is available via the "launch binder"
 button on this page; however, we recommend that you install the required R
 packages (e.g., via the included [`install.R`
-script](https://github.com/tlverse/enar2021-workshop/blob/master/install.R))and
-run all examples locally.
+script](https://github.com/tlverse/enar2021-workshop/blob/master/install.R))
+and run all examples locally.
